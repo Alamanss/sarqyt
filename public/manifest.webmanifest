@@ -1,0 +1,10 @@
+{
+  "name": "ZeroWaste ATU",
+  "short_name": "ZeroWaste",
+  "description": "Учёт пищевых отходов университетского комплекса АТУ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f3ea",
+  "theme_color": "#0f3a28",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
