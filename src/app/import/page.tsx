@@ -5,7 +5,7 @@ import { ArrowLeft, FileSpreadsheet, ScanText } from "lucide-react";
 import { PageHead, Shell } from "@/components/Shell";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, dateRu, entriesLabel } from "@/lib/i18n";
-import { supabase, today, type Report, type WasteType } from "@/lib/supabase";
+import { supabase, today, fmt, type Report, type WasteType } from "@/lib/supabase";
 import { api, errText } from "@/lib/data";
 
 type Row = { date: string; name: string; quantity: number; typeId: string | null; skip?: boolean };
@@ -93,12 +93,13 @@ function ImportInner() {
   async function run() {
     if (!org) return;
     setBusy("…"); setMsg("");
-    let ok = 0, fail = 0; const reports: Record<string, Report> = {}; let lastErr = "";
+    let ok = 0, fail = 0; const reports: Record<string, Report> = {}; let lastErr = ""; let tbo: string | null | undefined;
     for (const r of rows.filter((x) => !x.skip)) {
       try {
         let typeId = r.typeId;
         if (!typeId) { // новый вид отхода добавляется в справочник организации
-          const { data, error } = await supabase.from("waste_types").insert({ org_id: org.id, name_ru: r.name, name_kk: r.name, unit: "kg", co2_factor: 0.70021 }).select().single();
+          tbo ??= (await supabase.from("disposal_methods").select("id").eq("code", "TBO").order("name_ru").limit(1)).data?.[0]?.id ?? null;
+          const { data, error } = await supabase.from("waste_types").insert({ org_id: org.id, name_ru: r.name, name_kk: r.name, unit: "kg", co2_factor: 0.70021, default_disposal_id: tbo }).select().single();
           if (error) throw error;
           typeId = (data as WasteType).id; rows.filter((x) => norm(x.name) === norm(r.name)).forEach((x) => (x.typeId = typeId));
         }
@@ -155,7 +156,7 @@ function ImportInner() {
                         {types.map((x) => <option key={x.id} value={x.id}>{nm(x, lang)}</option>)}
                       </select>
                     </td>
-                    <td className="td num text-right font-semibold">{r.quantity} {t(typeById[r.typeId ?? ""]?.unit ?? "kg")}</td>
+                    <td className="td num text-right font-semibold">{fmt(r.quantity)} {t(typeById[r.typeId ?? ""]?.unit ?? "kg")}</td>
                   </tr>
                 ))}
               </tbody>
