@@ -59,6 +59,14 @@ function Dashboard() {
     ...(sorted.length > 7 ? [{ name: lang === "kk" ? "Басқа" : "Прочее", value: Math.round(sorted.slice(7).reduce((a, x) => a + x[1], 0)) }] : [])];
   // 3. сравнение организаций
   const cmp = orgs.map((o) => ({ name: short(o), value: Math.round(data.filter((e) => e.org_id === o.id).reduce((a, e) => a + Number(e.quantity), 0)) })).sort((a, b) => b.value - a.value);
+  // для одной организации сравнение бессмысленно — показываем, куда уходят отходы
+  const dispAgg: Record<string, { name: string; value: number; good: boolean }> = {};
+  for (const e of data) {
+    const d = dispById[e.disposal_id ?? ""]; const better = !!d?.code && d.code !== "TBO";
+    const o = (dispAgg[better ? d.id : "tbo"] ??= { name: better ? nm(d, lang) : lang === "kk" ? "ҚТҚ полигонға шығару" : "Вывоз ТБО на полигон", value: 0, good: better });
+    o.value += Number(e.quantity);
+  }
+  const bars: { name: string; value: number; good?: boolean }[] = isResp ? Object.values(dispAgg).map((x) => ({ ...x, value: Math.round(x.value) })).sort((a, b) => b.value - a.value) : cmp;
 
   // KPI
   const total = data.reduce((a, e) => a + Number(e.quantity), 0);
@@ -110,7 +118,12 @@ function Dashboard() {
     return out.slice(0, 4);
   }, [sorted, refs.types, lang]);
 
-  if (loading) return <div className="text-[14px] text-mute">{t("loading")}</div>;
+  if (loading) return (
+    <div role="status" aria-label={t("loading")}>
+      <div className="skeleton mb-2 h-9 w-64" /><div className="skeleton mb-6 h-5 w-80 max-w-full" />
+      <div className="skeleton mb-6 h-28 w-full !rounded-xl" /><div className="skeleton h-80 w-full !rounded-xl" />
+    </div>
+  );
 
   const period = months.length ? `${monthName(months[0] + "-01", lang)} – ${monthName(months[months.length - 1] + "-01", lang)}` : "";
   const tip = { contentStyle: { borderRadius: 8, border: "1px solid #e3e8ee", fontSize: 12.5, padding: "8px 10px" }, cursor: { fill: "#f6f8fa" } };
@@ -190,12 +203,12 @@ function Dashboard() {
         </div>
 
         <div className="card">
-          <h2 className="h2 mb-4">{t("chOrgs")}</h2>
+          <h2 className="h2 mb-4">{isResp ? (lang === "kk" ? "Қалдық қайда кетеді, кг" : "Куда уходят отходы, кг") : t("chOrgs")}</h2>
           <ul className="space-y-3">
-            {cmp.map((x) => (
+            {bars.map((x) => (
               <li key={x.name}>
                 <div className="mb-1 flex justify-between text-[14px]"><span className="text-ink">{x.name}</span><span className="num font-semibold">{fmt(x.value)} {t("kg")}</span></div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className="h-full rounded-full bg-brand" style={{ width: `${cmp[0]?.value ? Math.max(2, (x.value / cmp[0].value) * 100) : 0}%` }} /></div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className={`h-full rounded-full ${x.good === undefined ? "bg-brand" : x.good ? "bg-leaf" : "bg-[#9aa1b0]"}`} style={{ width: `${bars[0]?.value ? Math.max(2, (x.value / bars[0].value) * 100) : 0}%` }} /></div>
               </li>
             ))}
           </ul>
@@ -254,7 +267,7 @@ function Kpi({ label, value, unit, sub, chip, accent, className = "" }: { label:
         <span className={`num text-[28px] font-semibold leading-none tracking-[-0.025em] ${accent ? "text-leaf" : ""}`}>{value}<span className="ml-1 text-[14px] font-normal tracking-normal text-mute">{unit}</span></span>
         {chip && <span className={`num rounded-md px-1.5 py-0.5 text-[12px] font-semibold ${tone[chip.tone]}`}>{chip.text}</span>}
       </div>
-      {sub && <div className="mt-2 truncate text-[14px] text-mute">{sub}</div>}
+      {sub && <div className="mt-2 text-[14px] leading-5 text-mute">{sub}</div>}
     </div>
   );
 }

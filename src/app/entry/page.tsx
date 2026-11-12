@@ -2,8 +2,9 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Camera, Check, FileSpreadsheet, Leaf, Lock, MessageSquareWarning, Mic, Plus, Send, SendHorizontal, Sparkles, Trash2 } from "lucide-react";
-import { PageHead, Shell, StatusBadge } from "@/components/Shell";
+import { Camera, Check, FileSpreadsheet, Inbox, Leaf, Lock, MessageSquareWarning, Mic, Plus, Send, SendHorizontal, Sparkles, Trash2 } from "lucide-react";
+import { PageHead, Shell } from "@/components/Shell";
+import { useConfirm } from "@/components/Confirm";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, monthName, dateRu, entriesLabel } from "@/lib/i18n";
 import { supabase, today, fmt, type Disposal, type Entry, type History, type Report, type WasteType } from "@/lib/supabase";
@@ -14,6 +15,7 @@ const MAX_QTY = 500; // разумный верхний предел одной 
 function EntryInner() {
   const { profile, org } = useAuth();
   const { t, lang } = useI18n();
+  const ask = useConfirm();
   const params = useSearchParams();
   const month = params.get("m") || today().slice(0, 7);
   const isCurrentMonth = month === today().slice(0, 7);
@@ -94,7 +96,7 @@ function EntryInner() {
     if (q > MAX_QTY) return setMsg({ kind: "err", text: t("errTooBig") });
     if (date > today()) return setMsg({ kind: "err", text: t("errFuture") });
     const dup = entries.some((e) => e.entry_date === date && e.waste_type_id === typeId && Number(e.quantity) === q);
-    if (dup && !confirm(t("dupWarn"))) return;
+    if (dup && !(await ask({ title: lang === "kk" ? "Ұқсас жазба бар" : "Похожая запись уже есть", text: t("dupWarn"), ok: lang === "kk" ? "Сақтау" : "Сохранить", cancel: t("cancel") }))) return;
     setBusy(true);
     let photo_url: string | null = null;
     if (photo) {
@@ -136,7 +138,8 @@ function EntryInner() {
   }
 
   async function submit() {
-    if (!report || !confirm(t("submitConfirm"))) return;
+    if (!report) return;
+    if (!(await ask({ title: lang === "kk" ? "Есепті тексеруге жіберу керек пе?" : "Отправить отчёт на проверку?", text: lang === "kk" ? "Жіберілгеннен кейін тексеруші қайтармайынша жазбаларды өзгертуге болмайды." : "После отправки записи нельзя менять, пока проверяющий не вернёт отчёт.", ok: lang === "kk" ? "Жіберу" : "Отправить", cancel: t("cancel") }))) return;
     const { error } = await supabase.rpc("submit_report", { p_report: report.id });
     if (error) return setMsg({ kind: "err", text: errText(error, lang) });
     setMsg(null);
@@ -200,18 +203,16 @@ function EntryInner() {
 
   return (
     <>
-      <PageHead title={t("newEntry")} sub={<span className="inline-block first-letter:uppercase">{monthName(month + "-01", lang)} · {nm(org, lang)}</span>}>
-        {report && <StatusBadge status={report.status} />}
-      </PageHead>
+      <PageHead title={t("newEntry")} sub={<span className="inline-block first-letter:uppercase">{monthName(month + "-01", lang)}<span className="max-md:hidden"> · {nm(org, lang)}</span></span>} />
 
       {/* дорожка статусов отчёта */}
       <ol className="mb-6 flex items-center gap-1.5 overflow-x-auto text-[12px] [scrollbar-width:none] sm:gap-2 sm:text-[14px]">
         {STEPS.map((s, i) => (
           <li key={s} className="flex items-center gap-1.5 whitespace-nowrap sm:gap-2">
-            <span className={`grid h-5 w-5 place-items-center rounded-full text-[12px] ${i < stepIdx ? "bg-leaf text-white" : i === stepIdx ? "bg-brand text-white" : "border border-[#c9cfda] bg-paper text-faint"}`}>
+            <span className={`grid h-5 w-5 place-items-center rounded-full text-[12px] ${i < stepIdx ? "bg-leaf text-white" : i === stepIdx ? (report?.status === "returned" ? "bg-clay text-white" : "bg-brand text-white") : "border border-[#c9cfda] bg-paper text-faint"}`}>
               {i < stepIdx ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
             </span>
-            <span className={i === stepIdx ? "font-semibold text-ink" : "text-mute"}>{t(("st_" + s) as "st_draft")}</span>
+            <span className={i === stepIdx ? "font-semibold text-ink" : "text-mute"}>{i === 0 && report?.status === "returned" ? t("st_returned") : t(("st_" + s) as "st_draft")}</span>
             {i < STEPS.length - 1 && <span className="h-px w-3 bg-line sm:w-10" />}
           </li>
         ))}
@@ -320,7 +321,7 @@ function EntryInner() {
               <h2 className="h2">{t("entriesToday")}</h2>
               <span className="num text-[14px] text-mute">{dateRu(date)} · {dayEntries.length}</span>
             </div>
-            {dayEntries.length === 0 ? <p className="px-5 py-8 text-center text-[14px] text-mute">{t("noEntries")}</p> : (
+            {dayEntries.length === 0 ? <div className="flex flex-col items-center px-6 py-10 text-center"><Inbox className="h-6 w-6 text-faint" strokeWidth={1.6} /><p className="mt-3 text-[14px] font-semibold">{lang === "kk" ? "Бұл күнге жазба жоқ" : "За этот день записей нет"}</p><p className="mt-1 max-w-64 text-[14px] leading-5 text-mute">{lang === "kk" ? "Салмақты енгізіп, қалдық түрін таңдаңыз — жазба осында пайда болады." : "Введите вес и выберите вид отхода — запись появится здесь."}</p></div> : (
               <ul className="divide-y divide-line">
                 {dayEntries.map((e) => (
                   <li key={e.id} className="flex min-h-14 items-center gap-3 px-4 py-2 md:px-6">

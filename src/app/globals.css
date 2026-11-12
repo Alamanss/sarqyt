@@ -11,12 +11,12 @@
   sky    — «на проверке»
 */
 @theme inline {
-  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-ui), system-ui, sans-serif;
   --font-mono: var(--font-mono), ui-monospace, monospace;
   --color-ink: #16192c;
   --color-pine: #16192c;
   --color-mute: #5d6577;
-  --color-faint: #7d8597;
+  --color-faint: #687083;
   --color-line: #dfe3ea;
   --color-cream: #f5f6f8;
   --color-paper: #ffffff;
@@ -33,6 +33,10 @@
 }
 
 /* Акцент (действие и активное). По умолчанию синий; тёмный вариант: <html data-accent="ink"> в layout.tsx */
+/* Шрифт интерфейса: Inter по умолчанию; Golos Text и Onest — через <html data-font> */
+:root { --font-ui: var(--font-inter); }
+html[data-font="golos"] { --font-ui: var(--font-golos); }
+html[data-font="onest"] { --font-ui: var(--font-onest); }
 :root { --brand: #2f55e6; --brand-dark: #2343c4; --brand-tint: #edf1fe; }
 html[data-accent="ink"] { --brand: #16192c; --brand-dark: #2b3050; --brand-tint: #eef0f4; }
 
@@ -40,7 +44,7 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   background: var(--color-cream);
   color: var(--color-ink);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-ui), system-ui, sans-serif;
   font-size: 14px;
   line-height: 20px;
   letter-spacing: -0.006em;
@@ -71,6 +75,7 @@ body {
   .note-ok { @apply border-[#b5dfd0] bg-mint text-leafdark; }
   .note-err { @apply border-[#efbcc6] bg-[#fdf2f4] text-clay; }
   .note-info { @apply border-line bg-wash text-ink; }
+  .skeleton { @apply animate-pulse rounded-md bg-line; }
   .link { @apply inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand underline decoration-transparent underline-offset-4 hover:decoration-brand; }
 }
 
@@ -79,3 +84,14 @@ body {
   .field, .btn-primary, .btn-dark, .btn-ghost, .btn-danger { min-height: 48px; }
 }
 table tbody tr:hover { background: var(--color-wash); }
+
+/* выпадающий список в стиле полей: своя стрелка вместо системной */
+select.field {
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235d6577' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  text-overflow: ellipsis;
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { BarChart3, ClipboardList, FileSpreadsheet, LogOut, PenLine, Settings2, Table2, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, type Key } from "@/lib/i18n";
@@ -39,6 +39,33 @@ export function LangSwitch() {
   );
 }
 
+/** Переключатель вида: акцент и шрифт. Инструмент выбора на время работы над дизайном */
+export function DesignSwitch() {
+  const [accent, setAccent] = useState("blue");
+  const [font, setFont] = useState("inter");
+  useEffect(() => {
+    setAccent(document.documentElement.dataset.accent || "blue");
+    setFont(document.documentElement.dataset.font || "inter");
+  }, []);
+  const apply = (k: "accent" | "font", v: string) => {
+    document.documentElement.dataset[k] = v;
+    try { localStorage.setItem("zw-" + k, v); } catch {}
+    if (k === "accent") setAccent(v); else setFont(v);
+  };
+  return (
+    <div className="mb-3 flex items-center gap-2 px-1.5">
+      <span className="text-[12px] text-mute">Вид</span>
+      {([["blue", "#2f55e6"], ["ink", "#16192c"]] as const).map(([k, c]) => (
+        <button key={k} type="button" onClick={() => apply("accent", k)} aria-label={"Акцент: " + k} aria-pressed={accent === k}
+          className={`h-5 w-5 rounded-full border-2 border-paper ${accent === k ? "ring-2 ring-ink" : "ring-1 ring-line"}`} style={{ background: c }} />
+      ))}
+      <select className="ml-auto h-7 rounded-md border border-line bg-paper px-1.5 text-[12px] text-ink" value={font} onChange={(e) => apply("font", e.target.value)} aria-label="Шрифт">
+        <option value="inter">Inter</option><option value="golos">Golos Text</option><option value="onest">Onest</option>
+      </select>
+    </div>
+  );
+}
+
 export function Shell({ children, roles }: { children: ReactNode; roles?: Role[] }) {
   const { loading, profile, org, signOut } = useAuth();
   const { t, lang } = useI18n();
@@ -52,7 +79,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
   }, [loading, profile, roles, router, path]);
 
   if (loading || !profile || (roles && !roles.includes(profile.role)))
-    return <div className="grid min-h-dvh place-items-center text-[14px] text-mute">{t("loading")}</div>;
+    return <div className="grid min-h-dvh place-items-center" role="status" aria-label={t("loading")}><span className="animate-pulse"><Logo size={40} /></span></div>;
 
   const items = NAV.filter((n) => n.roles.includes(profile.role));
   const initials = profile.full_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
@@ -95,6 +122,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
               <span className="block truncate text-[12px] text-mute">{t(("role_" + profile.role) as Key)}</span>
             </span>
           </div>
+          <DesignSwitch />
           <div className="flex items-center justify-between gap-2">
             <LangSwitch />
             <button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-semibold text-mute hover:bg-wash hover:text-ink">
