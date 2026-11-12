@@ -80,6 +80,15 @@ async function main() {
   await db.from("reports").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
   const { data: types } = await db.from("waste_types").select("*");
+  const { data: methods } = await db.from("disposal_methods").select("*");
+  const byCode = Object.fromEntries((methods ?? []).filter((x) => x.code && x.code !== "TBO").map((x) => [x.code, x.id]));
+  // часть потоков уже идёт рекомендуемым способом — чтобы в аналитике была «доля переработки» и сэкономленный CO₂
+  const better = (slug, name, m) => {
+    if (m >= 8 && slug === "canella" && name === "Картонная тара") return byCode.RECYCLE;
+    if (m >= 8 && name === "Отработанное масло") return byCode.OIL;
+    if (m >= 9 && slug === "canella" && name === "Кофейный жмых") return byCode.COMPOST;
+    return null;
+  };
   let total = 0;
   for (const [slug, prof] of Object.entries(PROFILE)) {
     const org = orgBySlug[slug];
@@ -94,16 +103,17 @@ async function main() {
       if (error) throw error;
       const rows = [];
       // сентябрь — начало семестра, рост; октябрь у столовой — заметный всплеск «отходов из зала»
-      const season = m === 6 ? 0.55 : m === 7 ? 0.7 : 1;
+      const season = m === 6 ? 0.8 : m === 7 ? 0.88 : 1;
       for (let d = new Date(start); d <= end && d < TODAY; d = new Date(d.getTime() + 86400000)) {
         if (!prof.days.includes(d.getUTCDay())) continue;
         for (const [name, [a, b, p]] of Object.entries(prof.types)) {
           if (rnd() > p) continue;
           let q = between(a, b) * prof.k * season;
-          if (slug === "iskander" && m === 9 && name === "Пищевые отходы из зала") q *= 1.45;
+          if (slug === "iskander" && m === 9 && name === "Пищевые отходы из зала") q *= 1.4;
+          if (slug === "atu-inn" && m === 9 && name === "Остатки нереализованной продукции") q *= 1.5;
           q = Math.max(0.1, Math.round(q * 10) / 10);
           const t = tmap[name];
-          rows.push({ report_id: rep.id, org_id: org.id, entry_date: iso(d), waste_type_id: t.id, quantity: q, disposal_id: t.default_disposal_id, responsible_id: resp, source: "web" });
+          rows.push({ report_id: rep.id, org_id: org.id, entry_date: iso(d), waste_type_id: t.id, quantity: q, disposal_id: better(slug, name, m) ?? t.default_disposal_id, responsible_id: resp, source: "web" });
         }
       }
       for (let i = 0; i < rows.length; i += 500) {

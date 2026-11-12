@@ -8,7 +8,7 @@ import { fmt, co2 as co2calc, type Disposal, type Entry, type Org, type WasteTyp
 import { loadRefs, loadRegistry } from "@/lib/data";
 
 const COLORS = ["#1f7a4d", "#f2a71b", "#c8502d", "#2f6fb0", "#7b5ea7", "#3aa6a0", "#b8860b", "#8d99a6"];
-const ANOMALY = 0.25; // рост более чем на 25 % к среднему предыдущих месяцев
+const ANOMALY = 0.2; // рост более чем на 20 % к среднему предыдущих месяцев
 
 // Рекомендации по сокращению — по ключевым словам вида отхода
 const TIPS: [RegExp, string, string][] = [
@@ -71,7 +71,8 @@ function Dashboard() {
     }
   }
   const potTop = Object.entries(potByName).sort((a, b) => b[1].co2 - a[1].co2).slice(0, 5);
-  const recyclable = data.filter((e) => (typeById[e.waste_type_id]?.recyclability ?? "yes") !== "no").reduce((a, e) => a + Number(e.quantity), 0);
+  const recyclable = data.filter((e) => (typeById[e.waste_type_id]?.recyclability ?? "yes") === "yes").reduce((a, e) => a + Number(e.quantity), 0);
+  const partial = data.filter((e) => typeById[e.waste_type_id]?.recyclability === "partial").reduce((a, e) => a + Number(e.quantity), 0);
   const recycled = data.filter((e) => dispById[e.disposal_id ?? ""]?.is_recycling).reduce((a, e) => a + Number(e.quantity), 0);
   const sumMonth = (m: string, f: (e: Entry) => boolean = () => true) => data.filter((e) => e.entry_date.startsWith(m) && f(e)).reduce((a, e) => a + Number(e.quantity), 0);
   const curM = new Date().toISOString().slice(0, 7);
@@ -91,7 +92,7 @@ function Dashboard() {
     for (const o of orgs) for (const w of refs.types.filter((x) => x.org_id === o.id)) {
       const now = sumMonth(last, (e) => e.waste_type_id === w.id);
       const avg = before.reduce((a, m) => a + sumMonth(m, (e) => e.waste_type_id === w.id), 0) / before.length;
-      if (avg >= 5 && now > avg * (1 + ANOMALY)) out.push({ org: o, type: w, pct: (now - avg) / avg, now, avg });
+      if (avg >= 20 && now > avg * (1 + ANOMALY)) out.push({ org: o, type: w, pct: (now - avg) / avg, now, avg });
     }
     return out.sort((a, b) => b.pct - a.pct).slice(0, 6);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,7 +125,7 @@ function Dashboard() {
         <Kpi label={t("kpiMass")} value={total >= 1000 ? fmt(total / 1000) : fmt(total)} unit={total >= 1000 ? "т" : t("kg")} sub={(months.length ? `${monthName(months[0] + "-01", lang, false)} – ${monthName(months[months.length - 1] + "-01", lang, false)}` : "") + (delta != null && last && prev ? ` · ${monthName(last + "-01", lang, false)}: ${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%` : "")} dark />
         <Kpi label={t("kpiCo2")} value={co2 >= 1000 ? fmt(co2 / 1000) : fmt(co2)} unit={co2 >= 1000 ? "т CO₂e" : "кг CO₂e"} sub={`DEFRA 2024 · ${lang === "kk" ? "үнемделді" : "уже сэкономлено"} ${fmt(saved)} кг`} />
         <Kpi label={lang === "kk" ? "CO₂ үнемдеу әлеуеті" : "Потенциал экономии CO₂"} value={potential >= 1000 ? fmt(potential / 1000) : fmt(potential)} unit={potential >= 1000 ? "т CO₂e" : "кг CO₂e"} sub={lang === "kk" ? "ұсынылған тәсілге көшкенде" : "при переходе на рекомендуемые способы"} tone="good" />
-        <Kpi label={lang === "kk" ? "Өңдеуге жіберілді" : "Ушло на переработку"} value={total ? String(Math.round((recycled / total) * 100)) : "0"} unit="%" sub={`${t("kpiRecyclable").toLowerCase()}: ${total ? Math.round((recyclable / total) * 100) : 0}%`} />
+        <Kpi label={lang === "kk" ? "Өңдеуге жіберілді" : "Ушло на переработку"} value={total ? String(Math.round((recycled / total) * 100)) : "0"} unit="%" sub={`${t("kpiRecyclable").toLowerCase()}: ${total ? Math.round((recyclable / total) * 100) : 0}%${partial > 0 ? ` + ${Math.round((partial / total) * 100)}% ${lang === "kk" ? "ішінара" : "частично"}` : ""}`} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -143,8 +144,8 @@ function Dashboard() {
           {quarters.length > 1 && (
             <p className="mt-2 text-[13px] text-mute">
               {quarters.map((q, i) => (
-                <span key={q}>{i > 0 && " → "}<b className="text-ink">{q.slice(5)} {q.slice(0, 4)}</b>: <span className="num">{fmt(qSum(q))} {t("kg")}</span>
-                  {i > 0 && qSum(quarters[i - 1]) > 0 && <span className="num"> ({qSum(q) > qSum(quarters[i - 1]) ? "+" : ""}{Math.round(((qSum(q) - qSum(quarters[i - 1])) / qSum(quarters[i - 1])) * 100)}%)</span>}
+                <span key={q}>{i > 0 && " → "}<b className="text-ink">{q.slice(5)} {q.slice(0, 4)}</b>: <span className="num">{fmt(qSum(q))} {t("kg")}</span>{q === qOf(curM) && <span> ({lang === "kk" ? "толық емес" : "неполный"})</span>}
+                  {i > 0 && q !== qOf(curM) && qSum(quarters[i - 1]) > 0 && <span className="num"> ({qSum(q) > qSum(quarters[i - 1]) ? "+" : ""}{Math.round(((qSum(q) - qSum(quarters[i - 1])) / qSum(quarters[i - 1])) * 100)}%)</span>}
                 </span>
               ))}
             </p>
