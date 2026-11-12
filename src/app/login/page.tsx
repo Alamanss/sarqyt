@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { LangSwitch, Logo, Wordmark } from "@/components/Shell";
 
+// Демо-пароль общий и открытый (он же в README): по клику на демо-вход поля заполняются сами
+const DEMO_PASSWORD = "Atu2026demo";
 const DEMO: [string, string, string][] = [
   ["iskander@atu.demo", "Столовая «Искандер»", "Ответственное лицо"],
   ["canella@atu.demo", "Кофейня «Canella»", "Ответственное лицо"],
@@ -57,7 +59,7 @@ function LoginForm() {
             <p className="eyebrow mb-2">{t("demoLogins")}</p>
             <div className="overflow-hidden rounded-lg border border-line">
               {DEMO.map(([em, name, role], i) => (
-                <button type="button" key={em} onClick={() => setEmail(em)}
+                <button type="button" key={em} onClick={() => { setEmail(em); setPassword(DEMO_PASSWORD); }}
                   className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-wash ${i ? "border-t border-line" : ""} ${email === em ? "bg-brandtint" : ""}`}>
                   <span className="min-w-0"><span className="block truncate text-[14px] font-semibold">{name}</span><span className="block truncate text-[12px] text-mute">{role}</span></span>
                   <span className="shrink-0 font-mono text-[12px] text-faint">{em}</span>
