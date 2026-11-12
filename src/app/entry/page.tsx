@@ -262,7 +262,7 @@ function EntryInner() {
                   <div className="flex gap-2">
                     <button type="button" onClick={() => fileRef.current?.click()} aria-label={t("photoAi")} title={t("photoAi")} className="grid h-11 w-11 place-items-center rounded-lg border border-[#c9cfda] text-mute transition-colors hover:border-brand hover:text-brand"><Camera className="h-5 w-5" /></button>
                     <button type="button" onClick={voice} aria-label={t("voice")} title={t("voice")} className="grid h-11 w-11 place-items-center rounded-lg border border-[#c9cfda] text-mute transition-colors hover:border-brand hover:text-brand"><Mic className="h-5 w-5" /></button>
-                    <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = ""; }} />
+                    <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = ""; }} />
                   </div>
                 </div>
                 {(ai || photo) && (
