@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Leaf, TrendingUp, TriangleAlert } from "lucide-react";
+import { Leaf, RefreshCw, Sparkles, TrendingUp, TriangleAlert } from "lucide-react";
 import { PageHead, Shell } from "@/components/Shell";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, monthName } from "@/lib/i18n";
 import { fmt, co2 as co2calc, type Disposal, type Entry, type Org, type WasteType } from "@/lib/supabase";
-import { loadRefs, loadRegistry } from "@/lib/data";
+import { api, loadRefs, loadRegistry } from "@/lib/data";
 
 const COLORS = ["#2f55e6", "#8da2f2", "#f0a23b", "#2aa7a1", "#c3cad8", "#8a93a6", "#d8607e", "#16192c"];
 const ANOMALY = 0.2; // рост более чем на 20 % к среднему предыдущих месяцев
@@ -52,6 +52,8 @@ function Dashboard() {
   const [refs, setRefs] = useState<{ orgs: Org[]; types: WasteType[]; disposals: Disposal[] }>({ orgs: [], types: [], disposals: [] });
   const [loading, setLoading] = useState(true);
   const [orgFilter, setOrgFilter] = useState("");
+  const [sum, setSum] = useState<{ text: string; actions: string[]; ai: boolean } | null>(null);
+  const [sumBusy, setSumBusy] = useState(false);
 
   useEffect(() => {
     Promise.all([loadRefs(), loadRegistry()]).then(([rf, rg]) => { setRefs(rf); setEntries(rg.entries); setLoading(false); });
@@ -147,6 +149,33 @@ function Dashboard() {
     </div>
   );
 
+  // Сводка для руководства: ИИ пересказывает уже посчитанные показатели; при сбое — текст по шаблону
+  async function makeSummary() {
+    setSumBusy(true);
+    const scope = orgFilter ? nm(refs.orgs.find((o) => o.id === orgFilter), lang) : isResp && org ? nm(org, lang) : lang === "kk" ? "барлық ұйым" : "все организации";
+    const payload = {
+      lang, scope, months: months.map((m) => ({ month: m, kg: Math.round(sumMonth(m)) })),
+      totalKg: Math.round(total), co2Kg: Math.round(co2), co2SavedKg: Math.round(saved), co2PotentialKg: Math.round(potential),
+      recycledPercent: total ? Math.round((recycled / total) * 100) : 0,
+      lastFullMonth: last ?? null, changeVsPrevMonthPercent: delta == null ? null : Math.round(delta * 100),
+      topWaste: sorted.slice(0, 5).map(([name, kg]) => ({ name, kg: Math.round(kg) })),
+      anomalies: anomalies.map((a) => ({ waste: nm(a.type, lang), org: nm(a.org, lang), avgKg: Math.round(a.avg), nowKg: Math.round(a.now), growthPercent: Math.round(a.pct * 100) })),
+      potential: potTop.map(([name, p]) => ({ waste: name, kg: Math.round(p.kg), method: p.rec, co2SavingKg: Math.round(p.co2) })),
+    };
+    let res: { text: string | null; actions?: string[] } = { text: null };
+    try { res = await api("/api/ai/summary", payload); } catch {}
+    if (res.text) setSum({ text: res.text, actions: res.actions ?? [], ai: true });
+    else {
+      const a = anomalies[0], p = potTop[0];
+      setSum({
+        ai: false,
+        text: `${scope}: ${fmt(total)} кг отходов за период, CO₂-эквивалент ${fmt(co2)} кг.${delta != null ? ` Последний полный месяц к предыдущему: ${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%.` : ""}${a ? ` Главное отклонение: «${nm(a.type, lang)}», +${Math.round(a.pct * 100)}% к среднему.` : ""}`,
+        actions: p ? [`«${p[0]}»: ${p[1].rec} — экономия ${fmt(p[1].co2)} кг CO₂e.`] : [],
+      });
+    }
+    setSumBusy(false);
+  }
+
   const period = months.length ? `${monthName(months[0] + "-01", lang)} – ${monthName(months[months.length - 1] + "-01", lang)}` : "";
   const tip = { contentStyle: { borderRadius: 8, border: "1px solid #e3e8ee", fontSize: 12.5, padding: "8px 10px" }, cursor: { fill: "#f6f8fa" } };
 
@@ -154,7 +183,7 @@ function Dashboard() {
     <>
       <PageHead title={t("dashTitle")} sub={<span className="inline-block first-letter:uppercase">{period}{lang === "kk" ? " · тек қабылданған есептер" : " · только принятые отчёты"}</span>}>
         {!isResp && (
-          <select className="field !w-auto !min-w-56" value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)} aria-label={t("organization")}>
+          <select className="field !w-auto !min-w-56" value={orgFilter} onChange={(e) => { setOrgFilter(e.target.value); setSum(null); }} aria-label={t("organization")}>
             <option value="">{lang === "kk" ? "Барлық ұйым" : "Все организации"}</option>{refs.orgs.map((o) => <option key={o.id} value={o.id}>{nm(o, lang)}</option>)}
           </select>
         )}
@@ -170,6 +199,31 @@ function Dashboard() {
         <Kpi label={lang === "kk" ? "Өңдеуге жіберілді" : "Ушло на переработку"} value={total ? String(Math.round((recycled / total) * 100)) : "0"} unit="%"
           sub={`${lang === "kk" ? "жарамды" : "пригодно"}: ${total ? Math.round((recyclable / total) * 100) : 0}%${partial > 0 ? ` + ${Math.round((partial / total) * 100)}% ${lang === "kk" ? "ішінара" : "частично"}` : ""}`} className="border-t border-l border-line lg:border-t-0" />
       </div>
+
+      <section className="card mb-6" aria-live="polite">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="h2 flex items-center gap-2"><Sparkles className="h-4 w-4 text-brand" />{lang === "kk" ? "Басшылыққа арналған қорытынды" : "Сводка для руководства"}</h2>
+            {!sum && !sumBusy && <p className="mt-1 text-[14px] leading-5 text-mute">{lang === "kk" ? "ЖИ тізілім көрсеткіштері бойынша қысқа қорытынды мен келесі айға арналған әрекеттерді жазады." : "ИИ напишет короткий вывод по показателям реестра и действия на следующий месяц."}</p>}
+          </div>
+          <button type="button" className={sum ? "btn-ghost" : "btn-dark"} onClick={makeSummary} disabled={sumBusy || total === 0}>
+            {sum ? <RefreshCw className={`h-4 w-4 ${sumBusy ? "animate-spin" : ""}`} /> : <Sparkles className="h-4 w-4" />}
+            {sumBusy ? (lang === "kk" ? "Жазылуда…" : "Пишу…") : sum ? (lang === "kk" ? "Жаңарту" : "Обновить") : (lang === "kk" ? "Қорытынды жасау" : "Сформировать")}
+          </button>
+        </div>
+        {sumBusy && !sum && <div className="mt-4 space-y-2"><div className="skeleton h-4 w-full" /><div className="skeleton h-4 w-11/12" /><div className="skeleton h-4 w-2/3" /></div>}
+        {sum && (
+          <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+            <p className="text-[15px] leading-6">{sum.text}</p>
+            {sum.actions.length > 0 && (
+              <ol className="space-y-2 border-line text-[14px] leading-5 lg:border-l lg:pl-4">
+                {sum.actions.map((x, i) => <li key={i} className="flex gap-2.5"><span className="num grid h-5 w-5 shrink-0 place-items-center rounded-full bg-wash text-[12px] font-semibold">{i + 1}</span><span>{x}</span></li>)}
+              </ol>
+            )}
+            <p className="text-[12px] leading-4 text-mute lg:col-span-2">{sum.ai ? (lang === "kk" ? "Мәтінді ЖИ тізілімнің есептелген көрсеткіштері бойынша жасады; сандар — жүйе деректері." : "Текст сформирован ИИ по посчитанным показателям реестра; числа — данные системы.") : (lang === "kk" ? "ЖИ қолжетімсіз — қорытынды үлгі бойынша құрылды." : "ИИ недоступен — сводка собрана по шаблону.")}</p>
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[repeat(2,minmax(0,1fr))]">
         <div className="card min-w-0 lg:col-span-2">
