@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Shell } from "@/components/Shell";
+import { Leaf, TrendingUp, TriangleAlert } from "lucide-react";
+import { PageHead, Shell } from "@/components/Shell";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, monthName } from "@/lib/i18n";
 import { fmt, co2 as co2calc, type Disposal, type Entry, type Org, type WasteType } from "@/lib/supabase";
 import { loadRefs, loadRegistry } from "@/lib/data";
 
-const COLORS = ["#1f7a4d", "#f2a71b", "#c8502d", "#2f6fb0", "#7b5ea7", "#3aa6a0", "#b8860b", "#8d99a6"];
+const COLORS = ["#0b7a5b", "#3b6fd4", "#e0a526", "#8b6fd6", "#d8607e", "#2aa7a1", "#8792a2", "#c9d1dc"];
 const ANOMALY = 0.2; // рост более чем на 20 % к среднему предыдущих месяцев
 
 // Рекомендации по сокращению — по ключевым словам вида отхода
@@ -37,7 +38,8 @@ function Dashboard() {
   const isResp = profile?.role === "responsible";
   const typeById = useMemo(() => Object.fromEntries(refs.types.map((x) => [x.id, x])), [refs.types]);
   const dispById = useMemo(() => Object.fromEntries(refs.disposals.map((x) => [x.id, x])), [refs.disposals]);
-  const orgs = isResp ? refs.orgs.filter((o) => o.id === org?.id) : refs.orgs;
+  const orgVol = (id: string) => entries.reduce((a, e) => a + (e.org_id === id ? Number(e.quantity) : 0), 0);
+  const orgs = (isResp ? refs.orgs.filter((o) => o.id === org?.id) : [...refs.orgs]).sort((x, y) => orgVol(y.id) - orgVol(x.id));
   const data = useMemo(() => entries.filter((e) => !orgFilter || e.org_id === orgFilter), [entries, orgFilter]);
 
   const months = useMemo(() => [...new Set(data.map((e) => e.entry_date.slice(0, 7)))].sort(), [data]);
@@ -108,120 +110,151 @@ function Dashboard() {
     return out.slice(0, 4);
   }, [sorted, refs.types, lang]);
 
-  if (loading) return <div className="text-mute">{t("loading")}</div>;
+  if (loading) return <div className="text-[14px] text-mute">{t("loading")}</div>;
+
+  const period = months.length ? `${monthName(months[0] + "-01", lang)} – ${monthName(months[months.length - 1] + "-01", lang)}` : "";
+  const tip = { contentStyle: { borderRadius: 8, border: "1px solid #e3e8ee", boxShadow: "0 4px 12px rgba(26,31,54,.08)", fontSize: 12.5, padding: "8px 10px" }, cursor: { fill: "#f6f8fa" } };
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="h1">{t("dashTitle")}</h1>
+      <PageHead title={t("dashTitle")} sub={<span className="inline-block first-letter:uppercase">{period}{lang === "kk" ? " · тек қабылданған есептер" : " · только принятые отчёты"}</span>}>
         {!isResp && (
-          <select className="field !w-auto" value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)} aria-label={t("organization")}>
-            <option value="">{t("all")}</option>{refs.orgs.map((o) => <option key={o.id} value={o.id}>{nm(o, lang)}</option>)}
+          <select className="field !w-auto !min-w-56" value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)} aria-label={t("organization")}>
+            <option value="">{lang === "kk" ? "Барлық ұйым" : "Все организации"}</option>{refs.orgs.map((o) => <option key={o.id} value={o.id}>{nm(o, lang)}</option>)}
           </select>
         )}
+      </PageHead>
+
+      <div className="card mb-5 grid grid-cols-2 !p-0 lg:grid-cols-4">
+        <Kpi label={t("kpiMass")} value={total >= 1000 ? fmt(total / 1000) : fmt(total)} unit={total >= 1000 ? "т" : t("kg")}
+          chip={delta != null ? { text: `${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%`, tone: delta > 0.05 ? "bad" : delta < -0.05 ? "good" : "flat" } : undefined}
+          sub={last && prev ? `${monthName(last + "-01", lang, false)} / ${monthName(prev + "-01", lang, false)}` : ""} />
+        <Kpi label={t("kpiCo2")} value={co2 >= 1000 ? fmt(co2 / 1000) : fmt(co2)} unit={co2 >= 1000 ? "т CO₂e" : "кг CO₂e"} sub={`${lang === "kk" ? "үнемделді" : "уже сэкономлено"}: ${fmt(saved)} кг`} className="border-l border-line" />
+        <Kpi label={lang === "kk" ? "CO₂ үнемдеу әлеуеті" : "Потенциал экономии CO₂"} value={potential >= 1000 ? fmt(potential / 1000) : fmt(potential)} unit={potential >= 1000 ? "т CO₂e" : "кг CO₂e"} accent
+          sub={lang === "kk" ? "ұсынылған тәсілдерге көшкенде" : "при рекомендуемых способах"} className="border-t border-line lg:border-t-0 lg:border-l" />
+        <Kpi label={lang === "kk" ? "Өңдеуге жіберілді" : "Ушло на переработку"} value={total ? String(Math.round((recycled / total) * 100)) : "0"} unit="%"
+          sub={`${lang === "kk" ? "жарамды" : "пригодно"}: ${total ? Math.round((recyclable / total) * 100) : 0}%${partial > 0 ? ` + ${Math.round((partial / total) * 100)}% ${lang === "kk" ? "ішінара" : "частично"}` : ""}`} className="border-t border-l border-line lg:border-t-0" />
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label={t("kpiMass")} value={total >= 1000 ? fmt(total / 1000) : fmt(total)} unit={total >= 1000 ? "т" : t("kg")} sub={(months.length ? `${monthName(months[0] + "-01", lang, false)} – ${monthName(months[months.length - 1] + "-01", lang, false)}` : "") + (delta != null && last && prev ? ` · ${monthName(last + "-01", lang, false)}: ${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%` : "")} dark />
-        <Kpi label={t("kpiCo2")} value={co2 >= 1000 ? fmt(co2 / 1000) : fmt(co2)} unit={co2 >= 1000 ? "т CO₂e" : "кг CO₂e"} sub={`DEFRA 2024 · ${lang === "kk" ? "үнемделді" : "уже сэкономлено"} ${fmt(saved)} кг`} />
-        <Kpi label={lang === "kk" ? "CO₂ үнемдеу әлеуеті" : "Потенциал экономии CO₂"} value={potential >= 1000 ? fmt(potential / 1000) : fmt(potential)} unit={potential >= 1000 ? "т CO₂e" : "кг CO₂e"} sub={lang === "kk" ? "ұсынылған тәсілге көшкенде" : "при переходе на рекомендуемые способы"} tone="good" />
-        <Kpi label={lang === "kk" ? "Өңдеуге жіберілді" : "Ушло на переработку"} value={total ? String(Math.round((recycled / total) * 100)) : "0"} unit="%" sub={`${t("kpiRecyclable").toLowerCase()}: ${total ? Math.round((recyclable / total) * 100) : 0}%${partial > 0 ? ` + ${Math.round((partial / total) * 100)}% ${lang === "kk" ? "ішінара" : "частично"}` : ""}`} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2">
         <div className="card lg:col-span-2">
-          <h2 className="h2 mb-3">{t("chDynamics")}</h2>
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="h2">{t("chDynamics")}</h2>
+            {quarters.length > 1 && (
+              <p className="text-[12.5px] text-mute">
+                {quarters.map((q, i) => (
+                  <span key={q}>{i > 0 && <span className="mx-1.5 text-faint">/</span>}{q.slice(5)} {q.slice(0, 4)}: <b className="num font-medium text-ink">{fmt(qSum(q))} {t("kg")}</b>
+                    {q === qOf(curM) ? <span> ({lang === "kk" ? "толық емес" : "неполный"})</span> : i > 0 && qSum(quarters[i - 1]) > 0 && <span className="num"> ({qSum(q) > qSum(quarters[i - 1]) ? "+" : ""}{Math.round(((qSum(q) - qSum(quarters[i - 1])) / qSum(quarters[i - 1])) * 100)}%)</span>}
+                  </span>
+                ))}
+              </p>
+            )}
+          </div>
           <div className="h-72">
             <ResponsiveContainer>
-              <BarChart data={dyn} margin={{ left: -10, right: 8 }}>
-                <CartesianGrid stroke="#e3ddcd" vertical={false} />
-                <XAxis dataKey="m" tick={{ fontSize: 12 }} /><YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v) => `${fmt(Number(v))} ${t("kg")}`} /><Legend wrapperStyle={{ fontSize: 12 }} />
-                {orgs.map((o, i) => <Bar key={o.id} dataKey={short(o)} stackId="a" fill={COLORS[i % COLORS.length]} radius={i === orgs.length - 1 ? [6, 6, 0, 0] : 0} />)}
+              <BarChart data={dyn} margin={{ left: -14, right: 4, top: 4 }} barCategoryGap="28%">
+                <CartesianGrid stroke="#eef1f5" vertical={false} />
+                <XAxis dataKey="m" tick={{ fontSize: 12, fill: "#697386" }} axisLine={{ stroke: "#e3e8ee" }} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "#8792a2" }} axisLine={false} tickLine={false} />
+                <Tooltip {...tip} formatter={(v) => `${fmt(Number(v))} ${t("kg")}`} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12.5, color: "#697386", paddingTop: 8 }} />
+                {orgs.map((o, i) => <Bar key={o.id} dataKey={short(o)} stackId="a" fill={COLORS[i % COLORS.length]} radius={i === orgs.length - 1 ? [4, 4, 0, 0] : 0} />)}
               </BarChart>
             </ResponsiveContainer>
           </div>
-          {quarters.length > 1 && (
-            <p className="mt-2 text-[13px] text-mute">
-              {quarters.map((q, i) => (
-                <span key={q}>{i > 0 && " → "}<b className="text-ink">{q.slice(5)} {q.slice(0, 4)}</b>: <span className="num">{fmt(qSum(q))} {t("kg")}</span>{q === qOf(curM) && <span> ({lang === "kk" ? "толық емес" : "неполный"})</span>}
-                  {i > 0 && q !== qOf(curM) && qSum(quarters[i - 1]) > 0 && <span className="num"> ({qSum(q) > qSum(quarters[i - 1]) ? "+" : ""}{Math.round(((qSum(q) - qSum(quarters[i - 1])) / qSum(quarters[i - 1])) * 100)}%)</span>}
-                </span>
+        </div>
+
+        <div className="card">
+          <h2 className="h2 mb-4">{t("chStructure")}</h2>
+          <div className="grid items-center gap-4 sm:grid-cols-[180px_1fr]">
+            <div className="h-44">
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie data={struct} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="100%" paddingAngle={1.5} stroke="none">
+                    {struct.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip {...tip} formatter={(v) => `${fmt(Number(v))} ${t("kg")}`} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <ul className="min-w-0 space-y-1.5 text-[13px]">
+              {struct.map((x, i) => (
+                <li key={x.name} className="flex items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                  <span className="min-w-0 flex-1 truncate text-[#3c4257]">{x.name}</span>
+                  <span className="num font-medium">{total ? Math.round((x.value / total) * 100) : 0}%</span>
+                </li>
               ))}
-            </p>
-          )}
-        </div>
-
-        <div className="card">
-          <h2 className="h2 mb-3">{t("chStructure")}</h2>
-          <div className="h-72">
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={struct} dataKey="value" nameKey="name" innerRadius="48%" outerRadius="80%" paddingAngle={2}>
-                  {struct.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v) => `${fmt(Number(v))} ${t("kg")}`} /><Legend wrapperStyle={{ fontSize: 11 }} />
-              </PieChart>
-            </ResponsiveContainer>
+            </ul>
           </div>
         </div>
 
         <div className="card">
-          <h2 className="h2 mb-3">{t("chOrgs")}</h2>
-          <div className="h-72">
-            <ResponsiveContainer>
-              <BarChart data={cmp} layout="vertical" margin={{ left: 10, right: 16 }}>
-                <CartesianGrid stroke="#e3ddcd" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 12 }} /><YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => `${fmt(Number(v))} ${t("kg")}`} />
-                <Bar dataKey="value" radius={[0, 6, 6, 0]}>{cmp.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <h2 className="h2 mb-4">{t("chOrgs")}</h2>
+          <ul className="space-y-3">
+            {cmp.map((x) => (
+              <li key={x.name}>
+                <div className="mb-1 flex justify-between text-[13px]"><span className="text-[#3c4257]">{x.name}</span><span className="num font-medium">{fmt(x.value)} {t("kg")}</span></div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className="h-full rounded-full bg-leaf" style={{ width: `${cmp[0]?.value ? Math.max(2, (x.value / cmp[0].value) * 100) : 0}%` }} /></div>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="card">
-          <h2 className="h2 mb-2">⚠ {t("anomalies")}{last ? ` · ${monthName(last + "-01", lang, false)}` : ""}</h2>
-          {anomalies.length === 0 ? <p className="text-[14px] text-mute">{t("noAnomalies")}</p> : (
+        <div className="card !p-0">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <h2 className="h2 flex items-center gap-2"><TriangleAlert className="h-4 w-4 text-amber" />{t("anomalies")}</h2>
+            {last && <span className="text-[12.5px] inline-block first-letter:uppercase text-mute">{monthName(last + "-01", lang, false)} · {lang === "kk" ? "орташаға қарағанда" : "к среднему"} +{Math.round(ANOMALY * 100)}%</span>}
+          </div>
+          {anomalies.length === 0 ? <p className="px-5 py-8 text-center text-[13.5px] text-mute">{t("noAnomalies")}</p> : (
             <ul className="divide-y divide-line">
               {anomalies.map((a, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 py-2">
+                <li key={i} className="flex items-center justify-between gap-3 px-5 py-2.5">
                   <div className="min-w-0">
-                    <div className="truncate text-[14px] font-semibold">{nm(a.type, lang)}</div>
-                    <div className="truncate text-[12px] text-mute">{short(a.org)} · {fmt(a.avg)} → {fmt(a.now)} {t(a.type.unit)}</div>
+                    <div className="truncate text-[13.5px] font-medium">{nm(a.type, lang)}</div>
+                    <div className="num truncate text-[12px] text-mute">{short(a.org)} · {fmt(a.avg)} – {fmt(a.now)} {t(a.type.unit)}</div>
                   </div>
-                  <span className="num rounded-full bg-clay/15 px-2.5 py-0.5 text-[13px] font-bold text-clay">+{Math.round(a.pct * 100)}%</span>
+                  <span className="num inline-flex items-center gap-1 rounded-md bg-[#fdeaf0] px-2 py-[3px] text-[12px] font-medium text-[#a8284c]"><TrendingUp className="h-3 w-3" />+{Math.round(a.pct * 100)}%</span>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <div className="card !bg-pine !text-white">
-          <h2 className="mb-2 text-lg font-bold">💡 {t("recommendations")}</h2>
-          <ul className="mb-3 divide-y divide-white/10 text-[14px]">
+        <div className="card !p-0">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+            <h2 className="h2 flex items-center gap-2"><Leaf className="h-4 w-4 text-leaf" />{t("recommendations")}</h2>
+            <span className="text-[12.5px] text-mute">DEFRA 2024</span>
+          </div>
+          <ul className="divide-y divide-line">
             {potTop.map(([name, p]) => (
-              <li key={name} className="flex items-center justify-between gap-3 py-1.5">
-                <span className="min-w-0"><b className="block truncate">{name}</b><span className="block truncate text-[12px] text-white/60">{fmt(p.kg)} {t("kg")} → {p.rec}</span></span>
-                <span className="num whitespace-nowrap rounded-full bg-amber px-2.5 py-0.5 text-[13px] font-bold text-ink">−{fmt(p.co2)} кг CO₂e</span>
+              <li key={name} className="flex items-center justify-between gap-3 px-5 py-2.5">
+                <span className="min-w-0"><span className="block truncate text-[13.5px] font-medium">{name}</span><span className="num block truncate text-[12px] text-mute">{fmt(p.kg)} {t("kg")} · {p.rec}</span></span>
+                <span className="num whitespace-nowrap rounded-md bg-mint px-2 py-[3px] text-[12px] font-medium text-leafdark">−{fmt(p.co2)} кг CO₂e</span>
               </li>
             ))}
           </ul>
-          <ul className="space-y-2 text-[13px] text-white/80">
-            {tips.map((s, i) => <li key={i} className="flex gap-2"><span className="text-amber">●</span><span>{s}</span></li>)}
-          </ul>
+          {tips.length > 0 && (
+            <ul className="space-y-2 border-t border-line bg-wash px-5 py-4 text-[13px] text-[#3c4257]">
+              {tips.map((s, i) => <li key={i} className="flex gap-2"><span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-faint" /><span>{s}</span></li>)}
+            </ul>
+          )}
         </div>
       </div>
     </>
   );
 }
 
-function Kpi({ label, value, unit, sub, dark, tone }: { label: string; value: string; unit: string; sub?: string; dark?: boolean; tone?: "good" | "bad" }) {
+function Kpi({ label, value, unit, sub, chip, accent, className = "" }: { label: string; value: string; unit: string; sub?: string; chip?: { text: string; tone: "good" | "bad" | "flat" }; accent?: boolean; className?: string }) {
+  const tone = { good: "bg-mint text-leafdark", bad: "bg-[#fdeaf0] text-[#a8284c]", flat: "bg-[#f0f2f5] text-[#545969]" };
   return (
-    <div className={`card ${dark ? "!bg-pine !text-white" : ""}`}>
-      <div className={`text-[12px] font-semibold uppercase tracking-wide ${dark ? "text-white/60" : "text-mute"}`}>{label}</div>
-      <div className={`num mt-1 text-3xl font-bold ${tone === "bad" ? "text-clay" : tone === "good" ? "text-leaf" : ""}`}>{value}<span className="ml-1 text-base font-semibold opacity-70">{unit}</span></div>
-      {sub && <div className={`mt-1 truncate text-[12px] ${dark ? "text-white/60" : "text-mute"}`}>{sub}</div>}
+    <div className={`min-w-0 p-4 sm:p-5 ${className}`}>
+      <div className="eyebrow truncate">{label}</div>
+      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className={`num text-[28px] font-semibold leading-none tracking-[-0.025em] ${accent ? "text-leaf" : ""}`}>{value}<span className="ml-1 text-[13.5px] font-normal tracking-normal text-mute">{unit}</span></span>
+        {chip && <span className={`num rounded-md px-1.5 py-0.5 text-[12px] font-medium ${tone[chip.tone]}`}>{chip.text}</span>}
+      </div>
+      {sub && <div className="mt-2 truncate text-[12.5px] text-mute">{sub}</div>}
     </div>
   );
 }

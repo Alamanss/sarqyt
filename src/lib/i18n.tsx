@@ -65,7 +65,7 @@ const D = {
   errRequired: ["Заполните обязательные поля", "Міндетті өрістерді толтырыңыз"],
   draftRestored: ["Черновик восстановлен", "Жоба қалпына келтірілді"],
   photo: ["Фото", "Фото"],
-  photoAi: ["Определить по фото", "Фото арқылы анықтау"],
+  photoAi: ["По фото", "Фото арқылы"],
   voice: ["Голосом", "Дауыспен"],
   aiThinking: ["ИИ определяет вид отхода…", "ЖИ қалдық түрін анықтауда…"],
   aiGuess: ["ИИ считает, что это", "ЖИ пікірінше бұл"],
@@ -154,4 +154,11 @@ export function monthName(iso: string, lang: Lang, withYear = true) {
 }
 export function dateRu(iso: string) {
   return `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
+}
+
+/** «1 запись», «3 записи», «43 записи», «25 записей» */
+export function entriesLabel(n: number, lang: Lang) {
+  if (lang === "kk") return `${n} жазба`;
+  const a = n % 10, b = n % 100;
+  return `${n} ${a === 1 && b !== 11 ? "запись" : a >= 2 && a <= 4 && (b < 12 || b > 14) ? "записи" : "записей"}`;
 }

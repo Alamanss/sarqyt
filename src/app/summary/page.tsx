@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Shell } from "@/components/Shell";
+import { CircleCheck, Download, TriangleAlert } from "lucide-react";
+import { PageHead, Shell } from "@/components/Shell";
 import { useI18n, nm, monthName } from "@/lib/i18n";
 import { fmt, type Disposal, type Entry, type Org, type Report, type WasteType } from "@/lib/supabase";
 import { loadRefs, loadRegistry, loadReports } from "@/lib/data";
@@ -136,21 +137,17 @@ function Summary() {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="h1">{t("summaryTitle")}</h1>
-        <button type="button" className="btn-primary" onClick={exportExcel} disabled={loading || entries.length === 0}>
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
-          {t("exportExcel")}
-        </button>
-      </div>
-      <div className="card mb-4 flex flex-wrap items-end gap-3">
-        <div className="inline-flex rounded-xl border border-line bg-cream p-1 text-[14px] font-semibold">
+      <PageHead title={t("summaryTitle")} sub={<>{lang === "kk" ? "Кезең" : "Период"}: <span className="inline-block first-letter:uppercase">{periodLabel}</span> · {lang === "kk" ? "тек қабылданған есептер" : "только принятые отчёты"}</>}>
+        <button type="button" className="btn-primary" onClick={exportExcel} disabled={loading || entries.length === 0}><Download className="h-4 w-4" />{t("exportExcel")}</button>
+      </PageHead>
+      <div className="card mb-5 flex flex-wrap items-center gap-3 !py-3">
+        <div className="seg">
           {(["month", "quarter", "year"] as Mode[]).map((m) => (
-            <button key={m} type="button" onClick={() => setMode(m)} className={`rounded-lg px-3 py-1.5 ${mode === m ? "bg-pine text-white" : "text-mute"}`}>{t(m)}</button>
+            <button key={m} type="button" onClick={() => setMode(m)} className={mode === m ? "seg-on" : "seg-off"}>{t(m)}</button>
           ))}
         </div>
         {mode === "month" && (
-          <select className="field !w-auto capitalize" value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label={t("month")}>
+          <select className="field !w-auto inline-block first-letter:uppercase" value={month} onChange={(e) => setMonth(Number(e.target.value))} aria-label={t("month")}>
             {Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{monthName(`${year}-${pad(i + 1)}-01`, lang, false)}</option>)}
           </select>
         )}
@@ -163,19 +160,19 @@ function Summary() {
           {[now.getFullYear() - 1, now.getFullYear()].map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
         <div className="ml-auto text-right">
-          <div className="text-[12px] font-semibold uppercase tracking-wide text-mute">{t("total")}</div>
-          <div className="num text-2xl font-bold text-pine">{fmt(totalKg)} {t("kg")}</div>
+          <div className="eyebrow">{t("total")}</div>
+          <div className="num text-[22px] font-semibold tracking-[-0.02em]">{fmt(totalKg)} {t("kg")}</div>
         </div>
       </div>
 
-      <div className={`card mb-4 ${missing.length ? "border-amber/60 bg-amber/10" : "border-leaf/30 bg-mint"}`}>
-        <h2 className="h2 mb-1">{missing.length ? t("notSubmitted") : "✓ " + t("allSubmitted")}</h2>
+      <div className={`mb-5 rounded-xl border px-4 py-3 sm:px-5 ${missing.length ? "border-[#f2dfb5] bg-[#fdf8ea]" : "border-[#bfe6d8] bg-mint"}`}>
+        <h2 className={`flex items-center gap-2 text-[14px] font-semibold ${missing.length ? "mb-2 text-[#8a5a00]" : "text-leafdark"}`}>{missing.length ? <TriangleAlert className="h-4 w-4" /> : <CircleCheck className="h-4 w-4" />}{missing.length ? t("notSubmitted") : t("allSubmitted")}</h2>
         {missing.length > 0 && (
-          <ul className="grid gap-x-6 text-[14px] sm:grid-cols-2">
+          <ul className="grid gap-x-8 text-[13.5px] sm:grid-cols-2">
             {missing.map((x, i) => (
-              <li key={i} className="flex justify-between gap-2 border-b border-amber/30 py-1">
+              <li key={i} className="flex justify-between gap-2 border-t border-[#f2dfb5] py-1.5">
                 <span>{nm(x.org, lang)}</span>
-                <span className="whitespace-nowrap capitalize text-mute">{monthName(x.month + "-01", lang, false)}{x.status ? ` · ${t(("st_" + x.status) as "st_draft")}` : ""}</span>
+                <span className="whitespace-nowrap inline-block first-letter:uppercase text-mute">{monthName(x.month + "-01", lang, false)}{x.status ? ` · ${t(("st_" + x.status) as "st_draft")}` : ""}</span>
               </li>
             ))}
           </ul>
@@ -184,9 +181,9 @@ function Summary() {
 
       <div className="card overflow-x-auto !p-0">
         <table className="w-full min-w-[640px]">
-          <thead className="border-b border-line bg-cream/60"><tr>
+          <thead className="border-b border-line bg-wash"><tr>
             <th className="th">{t("organization")} / {t("wasteType")}</th>
-            {months.map((m) => <th key={m} className="th text-right capitalize">{monthName(m + "-01", lang, false)}</th>)}
+            {months.map((m) => <th key={m} className="th text-right first-letter:uppercase">{monthName(m + "-01", lang, false)}</th>)}
             <th className="th text-right">{t("total")}</th>
           </tr></thead>
           <tbody>
@@ -195,16 +192,16 @@ function Summary() {
               const ids = Object.keys(byType).sort((a, b) => (typeById[a]?.name_ru ?? "").localeCompare(typeById[b]?.name_ru ?? ""));
               const kgIds = ids.filter((x) => typeById[x]?.unit !== "l");
               return [
-                <tr key={o.id} className="border-t-2 border-line bg-mint/60">
-                  <td className="td font-bold text-pine">{nm(o, lang)}</td>
-                  {months.map((m) => <td key={m} className="td num text-right font-bold">{fmt(kgIds.reduce((a, x) => a + (byType[x][m] || 0), 0))}</td>)}
-                  <td className="td num text-right font-bold">{fmt(kgIds.reduce((a, x) => a + months.reduce((s, m) => s + (byType[x][m] || 0), 0), 0))} {t("kg")}</td>
+                <tr key={o.id} className="border-t border-line bg-wash">
+                  <td className="td font-semibold">{nm(o, lang)}</td>
+                  {months.map((m) => <td key={m} className="td num text-right font-semibold">{fmt(kgIds.reduce((a, x) => a + (byType[x][m] || 0), 0))}</td>)}
+                  <td className="td num text-right font-semibold">{fmt(kgIds.reduce((a, x) => a + months.reduce((s, m) => s + (byType[x][m] || 0), 0), 0))} {t("kg")}</td>
                 </tr>,
                 ...ids.map((tid) => (
-                  <tr key={o.id + tid} className="border-t border-line/60">
-                    <td className="td pl-6 text-[13px]">{nm(typeById[tid], lang)}</td>
+                  <tr key={o.id + tid} className="border-t border-line">
+                    <td className="td !pl-8 text-[13px] text-[#3c4257]">{nm(typeById[tid], lang)}</td>
                     {months.map((m) => <td key={m} className="td num text-right text-[13px]">{byType[tid][m] ? fmt(byType[tid][m]) : "—"}</td>)}
-                    <td className="td num text-right text-[13px] font-semibold">{fmt(months.reduce((s, m) => s + (byType[tid][m] || 0), 0))} {t(typeById[tid]?.unit ?? "kg")}</td>
+                    <td className="td num text-right text-[13px] font-medium">{fmt(months.reduce((s, m) => s + (byType[tid][m] || 0), 0))} {t(typeById[tid]?.unit ?? "kg")}</td>
                   </tr>
                 )),
               ];

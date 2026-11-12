@@ -2,27 +2,37 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { BarChart3, ClipboardList, FileSpreadsheet, LogOut, PenLine, Settings2, Table2, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, type Key } from "@/lib/i18n";
 import type { Role } from "@/lib/supabase";
 
-const NAV: { href: string; key: Key; roles: Role[]; icon: string }[] = [
-  { href: "/entry", key: "navEntry", roles: ["responsible"], icon: "M12 5v14M5 12h14" },
-  { href: "/reports", key: "navReports", roles: ["responsible", "reviewer", "admin", "management"], icon: "M6 3h9l4 4v14H6zM9 12h7M9 16h7" },
-  { href: "/registry", key: "navRegistry", roles: ["reviewer", "admin", "management"], icon: "M4 6h16M4 12h16M4 18h16" },
-  { href: "/summary", key: "navSummary", roles: ["reviewer", "admin", "management"], icon: "M5 20V10M12 20V4M19 20v-7" },
-  { href: "/dashboard", key: "navDashboard", roles: ["responsible", "reviewer", "admin", "management"], icon: "M4 19l5-6 4 3 7-9" },
-  { href: "/admin", key: "navAdmin", roles: ["admin"], icon: "M12 8a4 4 0 100 8 4 4 0 000-8zM3 12h2M19 12h2M12 3v2M12 19v2" },
+const NAV: { href: string; key: Key; roles: Role[]; icon: LucideIcon }[] = [
+  { href: "/entry", key: "navEntry", roles: ["responsible"], icon: PenLine },
+  { href: "/reports", key: "navReports", roles: ["responsible", "reviewer", "admin", "management"], icon: ClipboardList },
+  { href: "/registry", key: "navRegistry", roles: ["reviewer", "admin", "management"], icon: Table2 },
+  { href: "/summary", key: "navSummary", roles: ["reviewer", "admin", "management"], icon: FileSpreadsheet },
+  { href: "/dashboard", key: "navDashboard", roles: ["responsible", "reviewer", "admin", "management"], icon: BarChart3 },
+  { href: "/admin", key: "navAdmin", roles: ["admin"], icon: Settings2 },
 ];
 
-export function LangSwitch({ dark = false }: { dark?: boolean }) {
+export function Logo({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="#0b7a5b" />
+      <path d="M22.5 16a6.5 6.5 0 1 1-2.2-4.9" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M17.6 9.6l3 1.4-1.3 3" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function LangSwitch() {
   const { lang, setLang } = useI18n();
   return (
-    <div className={`inline-flex rounded-full p-0.5 text-[12px] font-bold ${dark ? "bg-white/10" : "bg-mint"}`} role="group" aria-label="Тіл / Язык">
+    <div className="seg !text-[12px]" role="group" aria-label="Тіл / Язык">
       {(["kk", "ru"] as const).map((l) => (
-        <button key={l} type="button" onClick={() => setLang(l)} aria-pressed={lang === l}
-          className={`rounded-full px-2.5 py-1 ${lang === l ? "bg-white text-pine" : dark ? "text-white/70" : "text-mute"}`}>
-          {l === "kk" ? "ҚАЗ" : "РУС"}
+        <button key={l} type="button" onClick={() => setLang(l)} aria-pressed={lang === l} className={`${lang === l ? "seg-on" : "seg-off"} !px-2 !py-1`}>
+          {l === "kk" ? "Қаз" : "Рус"}
         </button>
       ))}
     </div>
@@ -42,48 +52,79 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
   }, [loading, profile, roles, router, path]);
 
   if (loading || !profile || (roles && !roles.includes(profile.role)))
-    return <div className="grid min-h-dvh place-items-center text-mute">{t("loading")}</div>;
+    return <div className="grid min-h-dvh place-items-center text-[14px] text-mute">{t("loading")}</div>;
 
   const items = NAV.filter((n) => n.roles.includes(profile.role));
-  const who = t(("role_" + profile.role) as Key) + (org ? " · " + nm(org, lang) : "");
+  const initials = profile.full_name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const isOn = (href: string) => path.startsWith(href) || (href === "/entry" && path.startsWith("/import"));
+
   return (
-    <div className="min-h-dvh pb-20 md:pb-0">
-      <header className="sticky top-0 z-30 bg-pine text-white">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.svg" alt="" className="h-8 w-8 rounded-lg" />
-            <span className="hidden sm:inline">ZeroWaste ATU</span>
-          </Link>
-          <nav className="ml-4 hidden gap-1 md:flex">
-            {items.map((n) => (
-              <Link key={n.href} href={n.href}
-                className={`rounded-lg px-3 py-1.5 text-[14px] font-medium ${path.startsWith(n.href) ? "bg-white/15" : "text-white/75 hover:text-white"}`}>
+    <div className="min-h-dvh md:pl-60">
+      {/* боковое меню — ноутбук */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-line bg-paper md:flex">
+        <Link href="/" className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+          <Logo />
+          <span className="leading-tight">
+            <span className="block text-[14px] font-semibold tracking-[-0.01em]">ZeroWaste ATU</span>
+            <span className="block text-[11.5px] text-mute">{lang === "kk" ? "Қалдықтарды есепке алу" : "Учёт пищевых отходов"}</span>
+          </span>
+        </Link>
+        {org && (
+          <div className="mx-3 mb-2 rounded-lg border border-line bg-wash px-3 py-2">
+            <div className="text-[11px] font-medium text-mute">{t("organization")}</div>
+            <div className="text-[13px] font-medium leading-snug">{nm(org, lang)}</div>
+          </div>
+        )}
+        <nav className="flex flex-col gap-0.5 px-3 py-2">
+          {items.map((n) => {
+            const on = isOn(n.href);
+            return (
+              <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined}
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition ${on ? "bg-mint text-leafdark" : "text-[#3c4257] hover:bg-wash"}`}>
+                <n.icon className={`h-[17px] w-[17px] ${on ? "text-leaf" : "text-faint"}`} strokeWidth={1.9} />
                 {t(n.key)}
               </Link>
-            ))}
-          </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <div className="hidden text-right leading-tight lg:block">
-              <div className="text-[13px] font-semibold">{profile.full_name}</div>
-              <div className="text-[11px] text-white/60">{who}</div>
-            </div>
-            <LangSwitch dark />
-            <button type="button" onClick={signOut} className="rounded-lg border border-white/20 px-2.5 py-1.5 text-[12px] font-semibold hover:bg-white/10">{t("logout")}</button>
+            );
+          })}
+        </nav>
+        <div className="mt-auto border-t border-line p-3">
+          <div className="flex items-center gap-2.5 px-1.5 pb-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-mint text-[12px] font-semibold text-leafdark">{initials}</span>
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-[13px] font-medium">{profile.full_name}</span>
+              <span className="block truncate text-[11.5px] text-mute">{t(("role_" + profile.role) as Key)}</span>
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <LangSwitch />
+            <button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12.5px] font-medium text-mute hover:bg-wash hover:text-ink">
+              <LogOut className="h-4 w-4" strokeWidth={1.9} />{t("logout")}
+            </button>
           </div>
         </div>
-        <div className="truncate border-t border-white/10 px-4 py-1 text-[11px] text-white/70 lg:hidden">
-          {profile.full_name} · {who}
-        </div>
+      </aside>
+
+      {/* шапка — телефон */}
+      <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-line bg-paper/95 px-4 py-2.5 backdrop-blur md:hidden">
+        <Logo size={30} />
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-[13.5px] font-semibold">{org ? nm(org, lang) : "ZeroWaste ATU"}</span>
+          <span className="block truncate text-[11.5px] text-mute">{profile.full_name} · {t(("role_" + profile.role) as Key)}</span>
+        </span>
+        <LangSwitch />
+        <button type="button" onClick={signOut} aria-label={t("logout")} className="grid h-9 w-9 place-items-center rounded-lg text-mute hover:bg-wash"><LogOut className="h-[18px] w-[18px]" strokeWidth={1.9} /></button>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-5">{children}</main>
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper md:hidden">
+
+      <main className="mx-auto max-w-[1180px] px-4 pt-5 pb-24 md:px-8 md:pt-8 md:pb-12">{children}</main>
+
+      {/* нижнее меню — телефон */}
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {items.slice(0, 5).map((n) => {
-          const on = path.startsWith(n.href);
+          const on = isOn(n.href);
           return (
-            <Link key={n.href} href={n.href} className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-semibold ${on ? "text-leaf" : "text-mute"}`}>
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={n.icon} /></svg>
-              {t(n.key)}
+            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 pt-2 pb-1.5 text-[10.5px] font-medium ${on ? "text-leaf" : "text-faint"}`}>
+              <n.icon className="h-[21px] w-[21px]" strokeWidth={on ? 2.1 : 1.8} />
+              <span className="max-w-full truncate px-1">{t(n.key)}</span>
             </Link>
           );
         })}
@@ -92,14 +133,32 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
   );
 }
 
+const ST: Record<string, [string, string]> = {
+  draft: ["bg-[#f0f2f5] text-[#545969]", "bg-[#8792a2]"],
+  submitted: ["bg-[#fdf3dc] text-[#8a5a00]", "bg-[#d99a12]"],
+  in_review: ["bg-[#e6eefc] text-[#2a55a8]", "bg-sky"],
+  accepted: ["bg-mint text-leafdark", "bg-leaf"],
+  returned: ["bg-[#fdeaf0] text-[#a8284c]", "bg-clay"],
+};
 export function StatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
-  const cls: Record<string, string> = {
-    draft: "bg-line/60 text-ink",
-    submitted: "bg-amber/20 text-[#8a5a00]",
-    in_review: "bg-[#dbe9ff] text-[#1d4f9c]",
-    accepted: "bg-mint text-leaf",
-    returned: "bg-clay/15 text-clay",
-  };
-  return <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-bold ${cls[status] ?? ""}`}>{t(("st_" + status) as Key)}</span>;
+  const [box, dot] = ST[status] ?? ST.draft;
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-[3px] text-[12px] font-medium ${box}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />{t(("st_" + status) as Key)}
+    </span>
+  );
+}
+
+/** Заголовок страницы: название, пояснение и действия справа */
+export function PageHead({ title, sub, children }: { title: ReactNode; sub?: ReactNode; children?: ReactNode }) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
+      <div className="min-w-0">
+        <h1 className="h1">{title}</h1>
+        {sub && <p className="mt-1 text-[13.5px] text-mute">{sub}</p>}
+      </div>
+      {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
+    </div>
+  );
 }

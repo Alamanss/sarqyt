@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Shell } from "@/components/Shell";
-import { useI18n, nm, dateRu } from "@/lib/i18n";
+import { PageHead, Shell } from "@/components/Shell";
+import { useI18n, nm, dateRu, entriesLabel } from "@/lib/i18n";
 import { fmt, today, type Disposal, type Entry, type Org, type Profile, type WasteType, supabase } from "@/lib/supabase";
 import { loadRefs, loadRegistry } from "@/lib/data";
 
@@ -46,7 +46,9 @@ function Registry() {
 
   return (
     <>
-      <h1 className="h1 mb-4">{t("registryTitle")}</h1>
+      <PageHead title={t("navRegistry")} sub={t("registryTitle")}>
+        <div className="text-right"><div className="eyebrow">{entriesLabel(rows.length, lang)}</div><div className="num text-[18px] font-semibold tracking-[-0.01em]">{fmt(kg)} {t("kg")}{l > 0 && <span className="ml-1.5 text-[13px] font-medium text-mute">+ {fmt(l)} {t("l")}</span>}</div></div>
+      </PageHead>
       <div className="card mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
         <div><label className="label" htmlFor="f">{t("from")}</label><input id="f" type="date" className="field" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
         <div><label className="label" htmlFor="tt">{t("to")}</label><input id="tt" type="date" className="field" value={to} onChange={(e) => setTo(e.target.value)} /></div>
@@ -63,16 +65,13 @@ function Registry() {
             <option value="">{t("all")}</option>{refs.disposals.map((d) => <option key={d.id} value={d.id}>{nm(d, lang)}</option>)}
           </select></div>
       </div>
-      <p className="mb-3 text-[15px]">
-        <b className="num">{rows.length}</b> {t("entriesCount")} · {t("total")}: <b className="num">{fmt(kg)} {t("kg")}</b>{l > 0 && <> · <b className="num">{fmt(l)} {t("l")}</b></>}
-      </p>
       <div className="card overflow-x-auto !p-0">
         <table className="w-full min-w-[720px]">
-          <thead className="border-b border-line bg-cream/60"><tr>
+          <thead className="border-b border-line bg-wash"><tr>
             <th className="th">{t("date")}</th><th className="th">{t("organization")}</th><th className="th">{t("wasteType")}</th>
             <th className="th text-right">{t("quantity")}</th><th className="th">{t("disposal")}</th><th className="th">{t("responsible")}</th>
           </tr></thead>
-          <tbody className="divide-y divide-line/70">
+          <tbody className="divide-y divide-line">
             {loading ? <tr><td className="td text-mute" colSpan={6}>{t("loading")}</td></tr> :
               rows.length === 0 ? <tr><td className="td text-mute" colSpan={6}>{t("noEntries")}</td></tr> :
               rows.slice(0, limit).map((e) => (
@@ -80,7 +79,7 @@ function Registry() {
                   <td className="td num whitespace-nowrap">{dateRu(e.entry_date)}</td>
                   <td className="td">{nm(orgById[e.org_id], lang)}</td>
                   <td className="td">{nm(typeById[e.waste_type_id], lang)}</td>
-                  <td className="td num text-right font-semibold whitespace-nowrap">{fmt(Number(e.quantity))} {t(typeById[e.waste_type_id]?.unit ?? "kg")}</td>
+                  <td className="td num text-right font-medium whitespace-nowrap">{fmt(Number(e.quantity))} {t(typeById[e.waste_type_id]?.unit ?? "kg")}</td>
                   <td className="td text-mute">{nm(dispById[e.disposal_id ?? ""], lang)}</td>
                   <td className="td text-mute">{people[e.responsible_id ?? ""]?.full_name ?? "—"}</td>
                 </tr>

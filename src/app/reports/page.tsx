@@ -2,9 +2,10 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Shell, StatusBadge } from "@/components/Shell";
+import { ArrowLeft, Check, ChevronRight, CornerUpLeft, MessageSquareWarning, PenLine } from "lucide-react";
+import { PageHead, Shell, StatusBadge } from "@/components/Shell";
 import { useAuth } from "@/lib/auth";
-import { useI18n, nm, monthName, dateRu, type Key } from "@/lib/i18n";
+import { useI18n, nm, monthName, dateRu, entriesLabel, type Key } from "@/lib/i18n";
 import { supabase, fmt, type Disposal, type Entry, type History, type Org, type Profile, type Report, type WasteType } from "@/lib/supabase";
 import { errText, loadRefs, loadReports } from "@/lib/data";
 
@@ -15,6 +16,7 @@ function List() {
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [filter, setFilter] = useState<"queue" | "all">("queue");
+  const router = useRouter();
 
   useEffect(() => {
     (async () => {
@@ -36,27 +38,33 @@ function List() {
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="h1">{isResp ? t("myReports") : t("navReports")}</h1>
+      <PageHead title={isResp ? t("myReports") : t("navReports")} sub={lang === "kk" ? "Ұйымдардың айлық есептері" : "Месячные отчёты организаций и их статусы"}>
         {!isResp && (
-          <div className="inline-flex rounded-xl border border-line bg-paper p-1 text-[14px] font-semibold">
-            <button type="button" onClick={() => setFilter("queue")} className={`rounded-lg px-3 py-1.5 ${filter === "queue" ? "bg-pine text-white" : "text-mute"}`}>{t("queue")} · {queue.length}</button>
-            <button type="button" onClick={() => setFilter("all")} className={`rounded-lg px-3 py-1.5 ${filter === "all" ? "bg-pine text-white" : "text-mute"}`}>{t("allReports")}</button>
+          <div className="seg">
+            <button type="button" onClick={() => setFilter("queue")} className={filter === "queue" ? "seg-on" : "seg-off"}>{t("queue")} <span className="num ml-1 rounded bg-[#fdf3dc] px-1.5 text-[11.5px] text-[#8a5a00]">{queue.length}</span></button>
+            <button type="button" onClick={() => setFilter("all")} className={filter === "all" ? "seg-on" : "seg-off"}>{t("allReports")}</button>
           </div>
         )}
-      </div>
-      {shown.length === 0 ? <div className="card text-mute">{t("noEntries")}</div> : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map((r) => (
-            <Link key={r.id} href={`/reports?id=${r.id}`} className="card transition hover:border-leaf hover:shadow-md">
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div className="text-[15px] font-bold capitalize text-pine">{monthName(r.period_start, lang)}</div>
-                <StatusBadge status={r.status} />
-              </div>
-              <div className="text-[14px]">{nm(orgById[r.org_id], lang)}</div>
-              <div className="mt-2 text-[12px] text-mute">{counts[r.id] ?? "…"} {t("entriesCount")}{r.submitted_at ? ` · ${dateRu(r.submitted_at.slice(0, 10))}` : ""}</div>
-            </Link>
-          ))}
+      </PageHead>
+      {shown.length === 0 ? <div className="card py-10 text-center text-[13.5px] text-mute">{lang === "kk" ? "Тексеруді күтіп тұрған есеп жоқ" : "Нет отчётов, ожидающих проверки"}</div> : (
+        <div className="card overflow-x-auto !p-0">
+          <table className="w-full min-w-[560px]">
+            <thead className="border-b border-line bg-wash"><tr>
+              <th className="th">{t("period")}</th><th className="th">{t("organization")}</th><th className="th">{t("status")}</th><th className="th text-right">{lang === "kk" ? "Жазбалар" : "Записей"}</th><th className="th">{lang === "kk" ? "Жіберілді" : "Отправлен"}</th><th className="th w-8"></th>
+            </tr></thead>
+            <tbody className="divide-y divide-line">
+              {shown.map((r) => (
+                <tr key={r.id} className="cursor-pointer" onClick={() => router.push(`/reports?id=${r.id}`)}>
+                  <td className="td font-medium first-letter:uppercase"><Link href={`/reports?id=${r.id}`}>{monthName(r.period_start, lang)}</Link></td>
+                  <td className="td text-[#3c4257]">{nm(orgById[r.org_id], lang)}</td>
+                  <td className="td"><StatusBadge status={r.status} /></td>
+                  <td className="td num text-right">{counts[r.id] ?? "…"}</td>
+                  <td className="td num text-mute">{r.submitted_at ? dateRu(r.submitted_at.slice(0, 10)) : "—"}</td>
+                  <td className="td text-faint"><ChevronRight className="h-4 w-4" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </>
@@ -126,41 +134,37 @@ function Detail({ id }: { id: string }) {
 
   return (
     <>
-      <button type="button" onClick={() => router.push("/reports")} className="mb-3 text-[14px] font-semibold text-leaf">← {t("navReports")}</button>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <h1 className="h1 capitalize">{monthName(report.period_start, lang)}</h1>
+      <button type="button" onClick={() => router.push("/reports")} className="mb-3 inline-flex items-center gap-1 text-[13px] font-medium text-mute hover:text-ink"><ArrowLeft className="h-3.5 w-3.5" />{t("navReports")}</button>
+      <PageHead title={<span className="inline-block first-letter:uppercase">{monthName(report.period_start, lang)}</span>} sub={<>{nm(org, lang)} · <span className="num">{dateRu(report.period_start)} – {dateRu(report.period_end)}</span> · {entriesLabel(entries.length, lang)}</>}>
         <StatusBadge status={report.status} />
-      </div>
-      <p className="mb-4 text-[15px]">{nm(org, lang)} · <span className="text-mute">{dateRu(report.period_start)} – {dateRu(report.period_end)}</span></p>
+      </PageHead>
 
       {mine && report.status === "returned" && lastReturn?.comment && (
-        <div className="mb-4 rounded-2xl border border-clay/30 bg-clay/10 p-4">
-          <b className="block text-clay">{t("reviewerComment")}</b>{lastReturn.comment}
-        </div>
+        <div className="note note-err mb-4 flex gap-2.5"><MessageSquareWarning className="mt-0.5 h-4 w-4 shrink-0" /><span><b className="block font-semibold">{t("reviewerComment")}</b>{lastReturn.comment}</span></div>
       )}
       {mine && editable && (
-        <Link href={`/entry?m=${report.period_start.slice(0, 7)}`} className="btn-primary mb-4">{t("navEntry")} →</Link>
+        <Link href={`/entry?m=${report.period_start.slice(0, 7)}`} className="btn-primary mb-4"><PenLine className="h-4 w-4" />{lang === "kk" ? "Жазбаларды түзету" : "Исправить записи"}</Link>
       )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="grid h-fit gap-4">
           <div className="card">
-            <h2 className="h2 mb-2">{t("totalsMonth")}: <span className="num">{fmt(kg)} {t("kg")}{l > 0 ? ` · ${fmt(l)} ${t("l")}` : ""}</span></h2>
-            <ul className="grid gap-x-6 gap-y-1 text-[14px] sm:grid-cols-2">
+            <div className="mb-3 flex items-baseline justify-between"><h2 className="h2">{t("totalsMonth")}</h2><span className="num text-[15px] font-semibold">{fmt(kg)} {t("kg")}{l > 0 ? ` + ${fmt(l)} ${t("l")}` : ""}</span></div>
+            <ul className="grid gap-x-8 text-[13.5px] sm:grid-cols-2">
               {Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([tid, v]) => (
-                <li key={tid} className="flex justify-between gap-2 border-b border-line/60 py-1">
-                  <span className="truncate">{nm(typeById[tid], lang)}</span>
-                  <b className="num">{fmt(v)} {t(typeById[tid]?.unit ?? "kg")}</b>
+                <li key={tid} className="flex justify-between gap-2 border-b border-line py-1.5">
+                  <span className="truncate text-[#3c4257]">{nm(typeById[tid], lang)}</span>
+                  <b className="num font-medium">{fmt(v)} {t(typeById[tid]?.unit ?? "kg")}</b>
                 </li>
               ))}
             </ul>
           </div>
           <div className="card overflow-x-auto !p-0">
             <table className="w-full min-w-[560px]">
-              <thead className="border-b border-line bg-cream/60"><tr>
+              <thead className="border-b border-line bg-wash"><tr>
                 <th className="th">{t("date")}</th><th className="th">{t("wasteType")}</th><th className="th text-right">{t("quantity")}</th><th className="th">{t("disposal")}</th><th className="th">{t("responsible")}</th>
               </tr></thead>
-              <tbody className="divide-y divide-line/70">
+              <tbody className="divide-y divide-line">
                 {entries.map((e) => (
                   <tr key={e.id}>
                     <td className="td num whitespace-nowrap">{dateRu(e.entry_date)}</td>
@@ -183,26 +187,26 @@ function Detail({ id }: { id: string }) {
 
         <aside className="grid h-fit gap-4">
           {canReview && (report.status === "submitted" || report.status === "in_review") && (
-            <div className="card border-leaf/40">
-              <h2 className="h2 mb-2">{t("role_reviewer")}</h2>
+            <div className="card">
+              <h2 className="h2 mb-3">{lang === "kk" ? "Шешім" : "Решение по отчёту"}</h2>
               <label className="label" htmlFor="c">{t("comment")}</label>
               <textarea id="c" className="field mb-3 min-h-24 py-2" value={comment} onChange={(e) => setComment(e.target.value)} />
-              {err && <p className="mb-3 rounded-xl bg-clay/10 px-3 py-2 text-[14px] font-medium text-clay">{err}</p>}
+              {err && <p className="note note-err mb-3" role="alert">{err}</p>}
               <div className="grid gap-2">
-                <button type="button" className="btn-primary" disabled={busy} onClick={() => decide(true)}>✓ {t("accept")}</button>
-                <button type="button" className="btn-danger" disabled={busy} onClick={() => decide(false)}>↩ {t("returnBack")}</button>
+                <button type="button" className="btn-primary" disabled={busy} onClick={() => decide(true)}><Check className="h-4 w-4" />{t("accept")}</button>
+                <button type="button" className="btn-danger" disabled={busy} onClick={() => decide(false)}><CornerUpLeft className="h-4 w-4" />{t("returnBack")}</button>
               </div>
             </div>
           )}
           <div className="card">
             <h2 className="h2 mb-3">{t("history")}</h2>
-            <ol className="relative space-y-4 border-l-2 border-line pl-4">
+            <ol className="relative space-y-4 border-l border-line pl-4">
               {history.map((h) => (
                 <li key={h.id} className="relative">
-                  <span className="absolute -left-[23px] top-1 h-3 w-3 rounded-full border-2 border-paper bg-leaf" />
+                  <span className="absolute -left-[21px] top-[7px] h-2 w-2 rounded-full bg-faint ring-4 ring-paper" />
                   <div className="flex flex-wrap items-center gap-2"><StatusBadge status={h.to_status} /><span className="num text-[12px] text-mute">{new Date(h.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></div>
                   <div className="mt-1 text-[13px] text-mute">{people[h.user_id ?? ""]?.full_name ?? "—"}{people[h.user_id ?? ""] ? ` · ${t(("role_" + people[h.user_id ?? ""].role) as Key)}` : ""}</div>
-                  {h.comment && <div className="mt-1 rounded-lg bg-cream px-2 py-1 text-[13px]">«{h.comment}»</div>}
+                  {h.comment && <div className="mt-1.5 rounded-md border border-line bg-wash px-2.5 py-1.5 text-[13px]">{h.comment}</div>}
                 </li>
               ))}
             </ol>

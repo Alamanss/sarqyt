@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Shell } from "@/components/Shell";
+import { ArrowLeft, FileSpreadsheet, ScanText } from "lucide-react";
+import { PageHead, Shell } from "@/components/Shell";
 import { useAuth } from "@/lib/auth";
-import { useI18n, nm, dateRu } from "@/lib/i18n";
+import { useI18n, nm, dateRu, entriesLabel } from "@/lib/i18n";
 import { supabase, today, type Report, type WasteType } from "@/lib/supabase";
 import { api, errText } from "@/lib/data";
 
@@ -120,33 +121,32 @@ function ImportInner() {
 
   return (
     <>
-      <Link href="/entry" className="mb-3 inline-block text-[14px] font-semibold text-leaf">← {t("navEntry")}</Link>
-      <h1 className="h1 mb-1">{lang === "kk" ? "Импорт" : "Импорт данных"}</h1>
-      <p className="mb-4 text-[14px] text-mute">{nm(org, lang)}</p>
+      <Link href="/entry" className="mb-3 inline-flex items-center gap-1 text-[13px] font-medium text-mute hover:text-ink"><ArrowLeft className="h-3.5 w-3.5" />{t("navEntry")}</Link>
+      <PageHead title={lang === "kk" ? "Деректерді импорттау" : "Импорт данных"} sub={nm(org, lang)} />
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <button type="button" className="card text-left transition hover:border-leaf" onClick={() => xlsRef.current?.click()}>
-          <div className="h2">📊 Excel</div>
-          <p className="text-[14px] text-mute">{lang === "kk" ? "Қолданыстағы кестені (.xlsx) жүктеу" : "Загрузить действующую таблицу учёта (.xlsx)"}</p>
+          <div className="h2 mb-1 flex items-center gap-2"><FileSpreadsheet className="h-4 w-4 text-leaf" />Excel</div>
+          <p className="text-[13.5px] text-mute">{lang === "kk" ? "Қолданыстағы кестені (.xlsx) жүктеу" : "Загрузить действующую таблицу учёта (.xlsx)"}</p>
         </button>
         <button type="button" className="card text-left transition hover:border-leaf" onClick={() => imgRef.current?.click()}>
-          <div className="h2">📷 {lang === "kk" ? "Қағаз бланк" : "Фото бумажного бланка"}</div>
-          <p className="text-[14px] text-mute">{lang === "kk" ? "ЖИ бланк жолдарын тани алады (OCR)" : "ИИ распознает строки заполненного бланка (OCR)"}</p>
+          <div className="h2 mb-1 flex items-center gap-2"><ScanText className="h-4 w-4 text-leaf" />{lang === "kk" ? "Қағаз бланк" : "Фото бумажного бланка"}</div>
+          <p className="text-[13.5px] text-mute">{lang === "kk" ? "ЖИ бланк жолдарын тани алады (OCR)" : "ИИ распознает строки заполненного бланка (OCR)"}</p>
         </button>
         <input ref={xlsRef} type="file" accept=".xlsx" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onExcel(f); e.target.value = ""; }} />
         <input ref={imgRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = ""; }} />
       </div>
-      {busy && <p className="mb-3 rounded-xl bg-amber/15 px-3 py-2 text-[14px] font-medium text-[#8a5a00]">{busy}</p>}
-      {msg && <p className="mb-3 rounded-xl bg-mint px-3 py-2 text-[14px] font-medium text-pine">{msg}</p>}
+      {busy && <p className="note note-info mb-3" role="status">{busy}</p>}
+      {msg && <p className="note note-ok mb-3" role="status">{msg}</p>}
 
       {rows.length > 0 && (
         <>
           <div className="card mb-3 overflow-x-auto !p-0">
             <table className="w-full min-w-[620px]">
-              <thead className="border-b border-line bg-cream/60"><tr><th className="th"></th><th className="th">{t("date")}</th><th className="th">{lang === "kk" ? "Кестеде" : "В таблице"}</th><th className="th">{t("wasteType")}</th><th className="th text-right">{t("quantity")}</th></tr></thead>
-              <tbody className="divide-y divide-line/70">
+              <thead className="border-b border-line bg-wash"><tr><th className="th"></th><th className="th">{t("date")}</th><th className="th">{lang === "kk" ? "Кестеде" : "В таблице"}</th><th className="th">{t("wasteType")}</th><th className="th text-right">{t("quantity")}</th></tr></thead>
+              <tbody className="divide-y divide-line">
                 {rows.map((r, i) => (
                   <tr key={i} className={r.skip ? "opacity-40" : ""}>
-                    <td className="td"><input type="checkbox" className="h-5 w-5 accent-[#1f7a4d]" checked={!r.skip} onChange={() => setRows(rows.map((x, k) => (k === i ? { ...x, skip: !x.skip } : x)))} aria-label="import" /></td>
+                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#0b7a5b]" checked={!r.skip} onChange={() => setRows(rows.map((x, k) => (k === i ? { ...x, skip: !x.skip } : x)))} aria-label="import" /></td>
                     <td className="td num whitespace-nowrap">{r.date ? dateRu(r.date) : "—"}</td>
                     <td className="td text-mute">{r.name}</td>
                     <td className="td">
@@ -161,7 +161,7 @@ function ImportInner() {
               </tbody>
             </table>
           </div>
-          <button type="button" className="btn-primary w-full" disabled={!!busy || active.length === 0} onClick={run}>{lang === "kk" ? "Импорттау" : "Импортировать"} · {active.length} {t("entriesCount")}</button>
+          <button type="button" className="btn-primary w-full" disabled={!!busy || active.length === 0} onClick={run}>{lang === "kk" ? "Импорттау" : "Импортировать"} · {entriesLabel(active.length, lang)}</button>
         </>
       )}
     </>
