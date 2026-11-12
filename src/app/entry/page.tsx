@@ -249,8 +249,8 @@ function EntryInner() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
-        <section className="card h-fit !p-0">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)]">
+        <section className="card h-fit min-w-0 !p-0">
           {!editable && report ? (
             <div className="flex items-center gap-2.5 p-5 text-[14px] text-mute"><Lock className="h-4 w-4" />{t("locked")}</div>
           ) : (
@@ -356,7 +356,7 @@ function EntryInner() {
           )}
         </section>
 
-        <section className="grid h-fit gap-6">
+        <section className="grid h-fit min-w-0 grid-cols-[minmax(0,1fr)] gap-6">
           <div className="card grid grid-cols-2 !p-0">
             <Totals title={`${t("totalsDay")} · ${dateRu(date)}`} s={day} types={typeById} />
             <Totals title={`${t("totalsMonth")} · ${monthName(month + "-01", lang, false)}`} s={mon} types={typeById} second />

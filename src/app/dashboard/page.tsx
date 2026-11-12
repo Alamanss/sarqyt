@@ -138,7 +138,7 @@ function Dashboard() {
         )}
       </PageHead>
 
-      <div className="card mb-6 grid grid-cols-2 !p-0 lg:grid-cols-4">
+      <div className="card mb-6 grid grid-cols-[repeat(2,minmax(0,1fr))] !p-0 lg:grid-cols-[repeat(4,minmax(0,1fr))]">
         <Kpi label={t("kpiMass")} value={total >= 1000 ? fmt(total / 1000) : fmt(total)} unit={total >= 1000 ? "т" : t("kg")}
           chip={delta != null ? { text: `${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%`, tone: delta > 0.05 ? "bad" : delta < -0.05 ? "good" : "flat" } : undefined}
           sub={last && prev ? `${monthName(last + "-01", lang, false)} / ${monthName(prev + "-01", lang, false)}` : ""} />
@@ -149,8 +149,8 @@ function Dashboard() {
           sub={`${lang === "kk" ? "жарамды" : "пригодно"}: ${total ? Math.round((recyclable / total) * 100) : 0}%${partial > 0 ? ` + ${Math.round((partial / total) * 100)}% ${lang === "kk" ? "ішінара" : "частично"}` : ""}`} className="border-t border-l border-line lg:border-t-0" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="card lg:col-span-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[repeat(2,minmax(0,1fr))]">
+        <div className="card min-w-0 lg:col-span-2">
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="h2">{t("chDynamics")}</h2>
             {quarters.length > 1 && (
