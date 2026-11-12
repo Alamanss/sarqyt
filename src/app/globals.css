@@ -94,7 +94,7 @@ select.field {
   background-position: right 12px center;
   text-overflow: ellipsis;
 }
-@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } .marker { background-size: 100% 78% !important; } }
 
 /* движение: спокойное появление, без отвлекающих эффектов */
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -104,3 +104,29 @@ select.field {
 .app-main > *:nth-child(3) { animation-delay: 100ms; }
 .app-main > *:nth-child(n + 4) { animation-delay: 150ms; }
 html { scroll-behavior: smooth; }
+
+/* кабинет: отклик на действие — нажатие кнопки, появление сообщений, диалога и первых строк таблицы */
+.btn-primary, .btn-dark, .btn-ghost, .btn-danger { transition-property: color, background-color, border-color, transform; transition-duration: .15s; }
+.btn-primary:active, .btn-dark:active, .btn-ghost:active, .btn-danger:active { transform: scale(.97); }
+.note { animation: rise .3s ease-out both; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
+[role="dialog"] { animation: fade .18s ease-out both; }
+[role="dialog"] > div { animation: pop .24s cubic-bezier(.2, .8, .2, 1) both; }
+.app-main tbody tr:nth-child(-n + 10) { animation: rise .32s ease-out both; }
+.app-main tbody tr:nth-child(2) { animation-delay: 25ms; } .app-main tbody tr:nth-child(3) { animation-delay: 50ms; }
+.app-main tbody tr:nth-child(4) { animation-delay: 75ms; } .app-main tbody tr:nth-child(5) { animation-delay: 100ms; }
+.app-main tbody tr:nth-child(6) { animation-delay: 125ms; } .app-main tbody tr:nth-child(7) { animation-delay: 150ms; }
+.app-main tbody tr:nth-child(8) { animation-delay: 175ms; } .app-main tbody tr:nth-child(9) { animation-delay: 200ms; }
+.app-main tbody tr:nth-child(10) { animation-delay: 225ms; }
+
+/* витрина: доска с точками, маркер в заголовке, стикер, метки-курсоры */
+.board { background-image: radial-gradient(circle, #d3d7e1 1.2px, transparent 1.6px); background-size: 24px 24px; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent); mask-image: linear-gradient(to bottom, #000 55%, transparent); }
+.board-dark { background-image: radial-gradient(circle, #33374d 1.2px, transparent 1.6px); background-size: 24px 24px; }
+.marker { padding: 0 .14em; margin: 0 -.14em; border-radius: 8px; -webkit-box-decoration-break: clone; box-decoration-break: clone; background: linear-gradient(#fde050, #fde050) no-repeat 0 62% / 0% 78%; animation: marker .7s .5s cubic-bezier(.2, .7, .2, 1) forwards; }
+@keyframes marker { to { background-size: 100% 78%; } }
+@keyframes floaty { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-7px) rotate(var(--r, 0deg)); } }
+.floaty { animation: floaty 5.5s ease-in-out infinite; }
+.sticker { font-family: var(--font-hand), cursive; font-size: 22px; line-height: 22px; font-weight: 600; color: #16192c; background: #fde050; box-shadow: 0 14px 26px -12px rgba(22, 25, 44, .4); transform: rotate(var(--r, 0deg)); }
+.lift { transition: transform .3s cubic-bezier(.2, .7, .2, 1), box-shadow .3s, border-color .2s; }
+.lift:hover { transform: translateY(-4px); box-shadow: 0 18px 32px -20px rgba(22, 25, 44, .3); }

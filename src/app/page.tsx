@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BarChart3, Camera, Carrot, Check, ClipboardCheck, Coffee, Droplet, FileSpreadsheet, History, Leaf, Lock, Mic, Package, PenLine, Scale, SendHorizontal, ShieldCheck, Table2, Utensils } from "lucide-react";
+import { ArrowRight, BarChart3, Camera, Carrot, Check, ClipboardCheck, Coffee, FileSpreadsheet, History, Leaf, Lock, Mic, Package, PenLine, Scale, SendHorizontal, ShieldCheck, Table2, Utensils } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { LangSwitch, Logo, Wordmark } from "@/components/Shell";
@@ -40,6 +40,17 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
   }, []);
   return <div ref={ref} className={`transition-all duration-700 ease-out ${on ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"} ${className}`} style={{ transitionDelay: `${delay}ms` }}>{children}</div>;
 }
+
+/** Метка-курсор участника, как на общей доске */
+function Tag({ label, bg, fg = "#16192c", className = "" }: { label: string; bg: string; fg?: string; className?: string }) {
+  return (
+    <span className={`floaty pointer-events-none absolute z-10 flex items-start ${className}`} aria-hidden="true">
+      <svg width="16" height="18" viewBox="0 0 16 18"><path d="M1.5 1.5 14 8l-5.6 1.7L6 15.5z" fill={bg} stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+      <span className="-ml-0.5 mt-3 rounded-full px-2.5 py-1 text-[12px] leading-4 font-semibold whitespace-nowrap shadow-[0_6px_14px_-8px_rgba(22,25,44,.4)]" style={{ background: bg, color: fg }}>{label}</span>
+    </span>
+  );
+}
+const TILES = ["bg-[#fff3b8]", "bg-[#dff7f1]", "bg-[#e5dfff]", "bg-brandtint"];
 
 // Живой макет экрана ввода: сам проходит цикл «выбрал вид → ввёл вес → сохранил»
 const DEMO = [
@@ -124,11 +135,13 @@ export default function Home() {
 
       <main>
         {/* первый экран: продукт + снятое опасение, в подзаголовке цифры */}
-        <section className="mx-auto grid max-w-[1200px] items-center gap-12 px-4 pt-12 pb-16 md:px-7 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="relative overflow-x-clip">
+        <div className="board pointer-events-none absolute inset-0" aria-hidden="true" />
+        <section className="relative mx-auto grid max-w-[1200px] items-center gap-14 px-4 pt-12 pb-20 md:px-7 md:pt-20 md:pb-24 lg:grid-cols-[minmax(0,1fr)_400px]">
           <div className="hero-in">
-            <p className="mb-4 text-[14px] text-mute">Smart Food Industries · {kk ? "АТУ хакатоны, 1-трек" : "хакатон АТУ, Трек 1"}</p>
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3 py-1.5 text-[14px] text-mute"><span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-leaf opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-leaf" /></span>Smart Food Industries · {kk ? "АТУ хакатоны, 1-трек" : "хакатон АТУ, Трек 1"}</p>
             <h1 className="max-w-[640px] text-[36px] leading-[1.1] font-semibold tracking-[-0.03em] md:text-[56px]">
-              {kk ? <>Тамақ қалдықтарының есебі — <span className="text-brand">қағаз кестесіз</span></> : <>Учёт пищевых отходов — <span className="text-brand">без бумажных таблиц</span></>}
+              {kk ? <>Тамақ қалдықтарының есебі — <span className="marker">қағаз кестесіз</span></> : <>Учёт пищевых отходов — <span className="marker">без бумажных таблиц</span></>}
             </h1>
             <p className="mt-5 max-w-[540px] text-[18px] leading-7 text-mute">
               {kk ? "Смартфоннан жазба — 10 секунд, тоқсандық есеп — бір батырма. Кампустың бес ұйымы бір тізілімде." : "Запись со смартфона за 10 секунд, отчёт за квартал одной кнопкой. Пять организаций кампуса в одном реестре."}
@@ -143,8 +156,17 @@ export default function Home() {
               ))}
             </dl>
           </div>
-          <div className="hero-in [animation-delay:150ms]"><PhoneDemo kk={kk} /></div>
+          <div className="hero-in [animation-delay:150ms]">
+            <div className="relative mx-auto w-full max-w-[300px]">
+              <PhoneDemo kk={kk} />
+              <Tag label={kk ? "Асхана" : "Столовая"} bg="#ffd9ec" className="-left-3 top-8 sm:-left-24 sm:top-12" />
+              <Tag label={kk ? "Тексеруші" : "Проверяющий"} bg="#2f55e6" fg="#fff" className="-right-3 top-[58%] [animation-delay:1.4s] sm:-right-24" />
+              <span className="sticker floaty absolute -bottom-8 -left-1 z-10 w-[150px] px-3 py-3 text-center [--r:-5deg] [animation-delay:.7s] sm:-left-12" aria-hidden="true">{kk ? "3 түрту — жазба дайын" : "3 касания — и запись готова"}</span>
+            </div>
+          </div>
         </section>
+
+        </div>
 
         {/* как это работает */}
         <section id="how" className="scroll-mt-16 border-y border-line bg-cream">
@@ -153,8 +175,8 @@ export default function Home() {
             <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {steps.map(([Icon, h, p], i) => (
                 <Reveal key={h} delay={i * 90}>
-                  <li className="h-full rounded-xl border border-line bg-paper p-6">
-                    <div className="mb-6 flex items-center justify-between"><span className="grid h-10 w-10 place-items-center rounded-lg bg-brandtint text-brand"><Icon className="h-5 w-5" strokeWidth={1.9} /></span><span className="num text-[14px] text-faint">0{i + 1}</span></div>
+                  <li className="lift h-full rounded-xl border border-line bg-paper p-6">
+                    <div className="mb-6 flex items-center justify-between"><span className={`grid h-10 w-10 place-items-center rounded-lg text-ink ${TILES[i]}`}><Icon className="h-5 w-5" strokeWidth={1.9} /></span><span className="num text-[14px] text-faint">0{i + 1}</span></div>
                     <h3 className="text-[18px] leading-6 font-semibold">{h}</h3>
                     <p className="mt-2 text-[14px] leading-5 text-mute">{p}</p>
                   </li>
@@ -174,7 +196,7 @@ export default function Home() {
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {ways.map(([Icon, h, p], i) => (
                 <Reveal key={h} delay={i * 60}>
-                  <li className="h-full rounded-xl border border-line p-4 transition-colors hover:border-brand">
+                  <li className="lift h-full rounded-xl border border-line bg-paper p-4 hover:border-brand">
                     <Icon className="h-5 w-5 text-brand" strokeWidth={1.9} />
                     <h3 className="mt-4 text-[16px] leading-6 font-semibold">{h}</h3>
                     <p className="text-[14px] leading-5 text-mute">{p}</p>
@@ -208,8 +230,8 @@ export default function Home() {
               <p className="mt-4 max-w-[480px] text-[16px] leading-6 text-mute">{kk ? "Жүйе CO₂-эквивалентті есептейді, ұсынылған тәсілге көшкендегі үнемді көрсетеді және әр қалдық түріне «екінші өмір» ұсынады: компост, қайта өңдеу, фудшеринг." : "Система считает CO₂-эквивалент, показывает экономию при переходе на рекомендуемый способ и предлагает каждому виду отходов «вторую жизнь»: компост, переработку, фудшеринг."}</p>
             </Reveal>
             <Reveal delay={120}>
-              <div className="rounded-xl border border-line p-6 md:p-8">
-                <div className="flex items-center gap-2 text-[14px] text-mute"><Droplet className="h-4 w-4" />{kk ? "Атауы туралы" : "О названии"}</div>
+              <div className="rounded-xl border border-[#f1dd7e] bg-[#fff8d6] p-6 transition-transform duration-500 md:p-8 lg:-rotate-1 lg:hover:rotate-0">
+                <div className="flex items-center gap-3 text-[14px] text-mute"><Logo size={40} />{kk ? "Атауы туралы" : "О названии"}</div>
                 <p className="mt-4 text-[20px] leading-7 font-semibold tracking-[-0.01em]">{kk ? "Сарқыт — дастарханнан қонақтар алып кететін сый-тағам." : "Сарқыт — угощение, которое гости уносят с дастархана."}</p>
                 <p className="mt-3 text-[16px] leading-6 text-mute">{kk ? "Қазақ дәстүрінде тамақ тасталмайды — ол әрі қарай беріледі. Sarqyt осы әдетті университет асханаларының есебіне қайтарады." : "В казахской традиции еду не выбрасывают, а передают дальше. Sarqyt возвращает эту привычку в учёт университетских столовых."}</p>
               </div>
@@ -217,10 +239,10 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-line bg-ink text-white">
+        <section className="board-dark border-t border-line bg-ink text-white">
           <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-6 px-4 py-12 md:px-7 md:py-16">
             <h2 className="max-w-[560px] text-[24px] leading-8 font-semibold tracking-[-0.02em] md:text-[32px] md:leading-10">{kk ? "Толық циклды демо-деректермен көріңіз" : "Посмотрите полный цикл на демо-данных"}</h2>
-            <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-white px-6 text-[16px] font-semibold text-ink transition-colors hover:bg-[#e9ecf3]">{kk ? "Жүйеге кіру" : "Войти в систему"}<ArrowRight className="h-4 w-4" /></Link>
+            <Link href="/login" className="inline-flex min-h-12 items-center gap-2 rounded-lg bg-[#fde050] px-6 text-[16px] font-semibold text-ink transition-transform duration-200 hover:-translate-y-0.5">{kk ? "Жүйеге кіру" : "Войти в систему"}<ArrowRight className="h-4 w-4" /></Link>
           </div>
         </section>
       </main>

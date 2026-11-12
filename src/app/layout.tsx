@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Golos_Text, Inter, JetBrains_Mono, Onest } from "next/font/google";
+import { Caveat, Golos_Text, Inter, JetBrains_Mono, Onest } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
@@ -7,6 +7,8 @@ import { Providers } from "@/components/Providers";
 const inter = Inter({ variable: "--font-inter", subsets: ["latin", "cyrillic", "cyrillic-ext"] });
 const golos = Golos_Text({ variable: "--font-golos", subsets: ["latin", "cyrillic", "cyrillic-ext"] });
 const onest = Onest({ variable: "--font-onest", subsets: ["latin", "cyrillic", "cyrillic-ext"] });
+// рукописный — только для стикеров на витрине
+const hand = Caveat({ variable: "--font-hand", subsets: ["latin", "cyrillic"] });
 const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
@@ -18,7 +20,7 @@ export const viewport: Viewport = { themeColor: "#ffffff", width: "device-width"
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={`${inter.variable} ${golos.variable} ${onest.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="ru" className={`${inter.variable} ${golos.variable} ${onest.variable} ${mono.variable} ${hand.variable} h-full antialiased`}>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>
