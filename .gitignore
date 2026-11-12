@@ -42,3 +42,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# черновики презентации — локально
+/presentation/
