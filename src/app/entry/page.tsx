@@ -205,13 +205,13 @@ function EntryInner() {
       </PageHead>
 
       {/* дорожка статусов отчёта */}
-      <ol className="mb-5 flex items-center gap-1.5 overflow-x-auto text-[12px] font-medium [scrollbar-width:none] sm:gap-2 sm:text-[12.5px]">
+      <ol className="mb-6 flex items-center gap-1.5 overflow-x-auto text-[12px] [scrollbar-width:none] sm:gap-2 sm:text-[14px]">
         {STEPS.map((s, i) => (
           <li key={s} className="flex items-center gap-1.5 whitespace-nowrap sm:gap-2">
-            <span className={`grid h-5 w-5 place-items-center rounded-full text-[11px] ${i < stepIdx ? "bg-leaf text-white" : i === stepIdx ? "bg-ink text-white" : "border border-line bg-paper text-faint"}`}>
+            <span className={`grid h-5 w-5 place-items-center rounded-full text-[12px] ${i < stepIdx ? "bg-leaf text-white" : i === stepIdx ? "bg-ink text-white" : "border border-[#c9cfda] bg-paper text-faint"}`}>
               {i < stepIdx ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
             </span>
-            <span className={i === stepIdx ? "text-ink" : "text-mute"}>{t(("st_" + s) as "st_draft")}</span>
+            <span className={i === stepIdx ? "font-semibold text-ink" : "text-mute"}>{t(("st_" + s) as "st_draft")}</span>
             {i < STEPS.length - 1 && <span className="h-px w-3 bg-line sm:w-10" />}
           </li>
         ))}
@@ -224,17 +224,17 @@ function EntryInner() {
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,400px)_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,400px)_1fr]">
         <section className="card h-fit !p-0">
           {!editable && report ? (
             <div className="flex items-center gap-2.5 p-5 text-[14px] text-mute"><Lock className="h-4 w-4" />{t("locked")}</div>
           ) : (
             <>
-              <div className="border-b border-line p-4 sm:p-5">
+              <div className="border-b border-line p-4 md:p-6">
                 <label className="label" htmlFor="q">{cur?.unit === "l" ? t("volumeL") : t("weightKg")}</label>
                 <div className="relative">
-                  <input id="q" className="field num !h-[68px] !pr-14 !text-[34px] font-semibold tracking-[-0.02em]" inputMode="decimal" placeholder="0,0" value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9.,]/g, ""))} />
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[15px] font-medium text-faint">{t(cur?.unit ?? "kg")}</span>
+                  <input id="q" className="field num !h-[72px] !pr-14 !text-[36px] font-semibold tracking-[-0.02em]" inputMode="decimal" placeholder="0,0" value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9.,]/g, ""))} />
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-faint">{t(cur?.unit ?? "kg")}</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button type="button" className="btn-ghost" onClick={() => fileRef.current?.click()}><Camera className="h-4 w-4 text-mute" />{t("photoAi")}</button>
@@ -250,23 +250,23 @@ function EntryInner() {
                 )}
               </div>
 
-              <div className="p-4 sm:p-5">
+              <div className="p-4 md:p-6">
                 <label className="label" htmlFor="wt">{t("wasteType")}</label>
                 <select id="wt" className="field" value={typeId} onChange={(e) => pickType(e.target.value)}>
                   <option value="">{lang === "kk" ? "Тізімнен таңдаңыз" : "Выберите из списка"}</option>
                   {types.map((x) => <option key={x.id} value={x.id}>{nm(x, lang)} ({t(x.unit)})</option>)}
                 </select>
                 {!addOpen ? (
-                  <button type="button" className="mt-2 mb-4 inline-flex items-center gap-1 text-[13px] font-medium text-leaf hover:text-leafdark" onClick={() => setAddOpen(true)}><Plus className="h-3.5 w-3.5" />{t("addType").replace("+ ", "")}</button>
+                  <button type="button" className="link mt-3 mb-5" onClick={() => setAddOpen(true)}><Plus className="h-3.5 w-3.5" />{t("addType").replace("+ ", "")}</button>
                 ) : (
                   <div className="mt-2 mb-4 rounded-lg border border-line bg-wash p-3">
                     <label className="label" htmlFor="nn">{t("newTypeName")}</label>
                     <input id="nn" className="field mb-2.5" value={newName} onChange={(e) => setNewName(e.target.value)} autoFocus />
-                    <div className="mb-3 flex items-center gap-3 text-[13.5px]">
+                    <div className="mb-3 flex items-center gap-3 text-[14px]">
                       <select className="field !w-24" value={newUnit} onChange={(e) => setNewUnit(e.target.value as "kg" | "l")} aria-label={t("unit")}>
                         <option value="kg">{t("kg")}</option><option value="l">{t("l")}</option>
                       </select>
-                      <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-[#0b7a5b]" checked={newRec} onChange={(e) => setNewRec(e.target.checked)} />{t("recyclable")}</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" className="h-4 w-4 accent-[#16192c]" checked={newRec} onChange={(e) => setNewRec(e.target.checked)} />{t("recyclable")}</label>
                     </div>
                     <div className="flex gap-2">
                       <button type="button" className="btn-primary flex-1" onClick={addType}>{t("add")}</button>
@@ -281,7 +281,7 @@ function EntryInner() {
                   {disposals.map((x) => <option key={x.id} value={x.id}>{nm(x, lang)}</option>)}
                 </select>
                 {cur?.recommended_disposal_id && cur.recommended_disposal_id !== dispId && dispById[cur.recommended_disposal_id] && (
-                  <button type="button" onClick={() => setDispId(cur.recommended_disposal_id!)} className="mt-2 flex w-full items-start gap-2 rounded-lg bg-mint px-3 py-2 text-left text-[12.5px] text-leafdark transition hover:bg-[#d9efe6]">
+                  <button type="button" onClick={() => setDispId(cur.recommended_disposal_id!)} className="mt-2 flex w-full items-start gap-2 rounded-lg bg-mint px-3 py-2 text-left text-[14px] text-leafdark transition hover:bg-[#d9efe6]">
                     <Leaf className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>{lang === "kk" ? "Ұсынылады" : "Рекомендуется"}: <b className="font-semibold">{nm(dispById[cur.recommended_disposal_id], lang)}</b> · −{Math.round(Number(cur.co2_landfill ?? 0) - Number(cur.co2_recommended ?? 0))} кг CO₂e/т</span>
                   </button>
@@ -294,45 +294,47 @@ function EntryInner() {
                   </div>
                   <div className="min-w-0">
                     <span className="label">{t("responsible")}</span>
-                    <div className="flex h-10 items-center rounded-lg border border-line bg-wash px-3 text-[13.5px] text-mute max-md:h-[46px]"><span className="truncate">{profile?.full_name}</span></div>
+                    <div className="flex h-11 items-center rounded-lg border border-line bg-wash px-3 text-[14px] text-mute max-md:h-12"><span className="truncate">{profile?.full_name}</span></div>
                   </div>
                 </div>
 
-                <button type="button" className="btn-primary mt-5 w-full !min-h-12 !text-[15px]" onClick={save} disabled={busy}>{t("save")}</button>
+                <div className="mt-6 max-md:sticky max-md:bottom-[68px] max-md:z-10 max-md:-mx-4 max-md:-mb-4 max-md:rounded-b-xl max-md:border-t max-md:border-line max-md:bg-paper max-md:p-3">
+                  <button type="button" className="btn-primary w-full !min-h-12" onClick={save} disabled={busy}>{t("save")}</button>
+                </div>
               </div>
             </>
           )}
           {msg && (
-            <p role="status" className={`note mx-4 mb-4 sm:mx-5 sm:mb-5 ${msg.kind === "err" ? "note-err" : msg.kind === "ok" ? "note-ok" : "note-info"}`}>{msg.text}</p>
+            <p role="status" className={`note mx-4 mb-4 md:mx-6 md:mb-6 ${msg.kind === "err" ? "note-err" : msg.kind === "ok" ? "note-ok" : "note-info"}`}>{msg.text}</p>
           )}
         </section>
 
-        <section className="grid h-fit gap-5">
+        <section className="grid h-fit gap-6">
           <div className="card grid grid-cols-2 !p-0">
             <Totals title={`${t("totalsDay")} · ${dateRu(date)}`} s={day} types={typeById} />
             <Totals title={`${t("totalsMonth")} · ${monthName(month + "-01", lang, false)}`} s={mon} types={typeById} second />
           </div>
 
           <div className="card !p-0">
-            <div className="flex items-center justify-between border-b border-line px-4 py-3 sm:px-5">
+            <div className="flex items-center justify-between border-b border-line px-4 py-4 md:px-6">
               <h2 className="h2">{t("entriesToday")}</h2>
-              <span className="num text-[12.5px] text-mute">{dateRu(date)} · {dayEntries.length}</span>
+              <span className="num text-[14px] text-mute">{dateRu(date)} · {dayEntries.length}</span>
             </div>
-            {dayEntries.length === 0 ? <p className="px-5 py-8 text-center text-[13.5px] text-mute">{t("noEntries")}</p> : (
+            {dayEntries.length === 0 ? <p className="px-5 py-8 text-center text-[14px] text-mute">{t("noEntries")}</p> : (
               <ul className="divide-y divide-line">
                 {dayEntries.map((e) => (
-                  <li key={e.id} className="flex items-center gap-3 px-4 py-2.5 sm:px-5">
+                  <li key={e.id} className="flex min-h-14 items-center gap-3 px-4 py-2 md:px-6">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     {e.photo_url && <a href={e.photo_url} target="_blank" rel="noreferrer"><img src={e.photo_url} alt="" className="h-9 w-9 rounded-md object-cover" /></a>}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13.5px] font-medium">{nm(typeById[e.waste_type_id], lang)}</div>
+                      <div className="truncate text-[14px] font-semibold">{nm(typeById[e.waste_type_id], lang)}</div>
                       <div className="flex items-center gap-1.5 text-[12px] text-mute">
                         <span className="truncate">{nm(dispById[e.disposal_id ?? ""], lang)}</span>
-                        {e.source !== "web" && <span className="shrink-0 rounded bg-[#f0f2f5] px-1.5 py-px text-[11px] font-medium text-[#545969]">{SRC[e.source] ?? e.source}</span>}
+                        {e.source !== "web" && <span className="shrink-0 rounded bg-[#f0f2f5] px-1.5 py-px text-[12px] font-semibold text-[#545969]">{SRC[e.source] ?? e.source}</span>}
                       </div>
                     </div>
                     <div className="num whitespace-nowrap text-[14px] font-semibold">{fmt(Number(e.quantity))} <span className="font-normal text-mute">{t(typeById[e.waste_type_id]?.unit ?? "kg")}</span></div>
-                    {editable && <button type="button" onClick={() => remove(e.id)} aria-label={t("delete")} className="grid h-8 w-8 place-items-center rounded-md text-faint hover:bg-[#fdf2f5] hover:text-clay"><Trash2 className="h-4 w-4" /></button>}
+                    {editable && <button type="button" onClick={() => remove(e.id)} aria-label={t("delete")} className="grid h-11 w-11 place-items-center rounded-lg text-faint hover:bg-wash hover:text-clay"><Trash2 className="h-4 w-4" /></button>}
                   </li>
                 ))}
               </ul>
@@ -343,15 +345,16 @@ function EntryInner() {
             <div className="card flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="h2">{t("submitReport")}</div>
-                <div className="text-[13px] text-mute">{entriesLabel(entries.length, lang)} · <span className="inline-block first-letter:uppercase">{monthName(month + "-01", lang)}</span></div>
+                <div className="text-[14px] text-mute">{entriesLabel(entries.length, lang)} · <span className="inline-block first-letter:uppercase">{monthName(month + "-01", lang)}</span></div>
               </div>
-              <button type="button" className="btn-dark" onClick={submit} disabled={entries.length === 0}><Send className="h-4 w-4" />{lang === "kk" ? "Жіберу" : "Отправить"}</button>
+              <button type="button" className="btn-dark max-md:w-full" onClick={submit} disabled={entries.length === 0}><Send className="h-4 w-4" />{lang === "kk" ? "Жіберу" : "Отправить"}</button>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/import" className="btn-ghost"><FileSpreadsheet className="h-4 w-4 text-mute" />{lang === "kk" ? "Импорт" : "Импорт Excel / бланка"}</Link>
-            <button type="button" className="btn-ghost" onClick={async () => { const j = await api("/api/telegram/link", {}); if (j.url) window.open(j.url, "_blank"); else setMsg({ kind: "err", text: j.error ?? "Telegram" }); }}><SendHorizontal className="h-4 w-4 text-mute" />Telegram-бот</button>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-1">
+            <span className="text-[14px] text-mute">{lang === "kk" ? "Басқа тәсілдер" : "Другие способы ввода"}</span>
+            <Link href="/import" className="link"><FileSpreadsheet className="h-4 w-4" />{lang === "kk" ? "Excel немесе бланк" : "Excel или фото бланка"}</Link>
+            <button type="button" className="link" onClick={async () => { const j = await api("/api/telegram/link", {}); if (j.url) window.open(j.url, "_blank"); else setMsg({ kind: "err", text: j.error ?? "Telegram" }); }}><SendHorizontal className="h-4 w-4" />Telegram-бот</button>
           </div>
         </section>
       </div>
@@ -365,16 +368,16 @@ function Totals({ title, s, types, second }: { title: string; s: { by: Record<st
   const { t, lang } = useI18n();
   const rows = Object.entries(s.by).sort((a, b) => b[1] - a[1]);
   return (
-    <div className={`min-w-0 p-4 sm:p-5 ${second ? "border-l border-line" : ""}`}>
+    <div className={`min-w-0 p-4 md:p-6 ${second ? "border-l border-line" : ""}`}>
       <div className="eyebrow truncate">{title}</div>
       <div className="num mt-1 text-[26px] font-semibold tracking-[-0.02em]">{fmt(s.kg)} <span className="text-[14px] font-normal text-mute">{t("kg")}</span>
-        {s.l > 0 && <span className="ml-2 whitespace-nowrap text-[14px] font-medium text-mute">+ {fmt(s.l)} {t("l")}</span>}
+        {s.l > 0 && <span className="ml-2 whitespace-nowrap text-[14px] font-semibold text-mute">+ {fmt(s.l)} {t("l")}</span>}
       </div>
-      <ul className="mt-3 space-y-1 text-[12.5px]">
+      <ul className="mt-3 space-y-1 text-[14px]">
         {rows.slice(0, 6).map(([id, v]) => (
           <li key={id} className="flex justify-between gap-2">
             <span className="truncate text-mute">{nm(types[id], lang)}</span>
-            <span className="num whitespace-nowrap font-medium">{fmt(v)} {t(types[id]?.unit ?? "kg")}</span>
+            <span className="num whitespace-nowrap font-semibold">{fmt(v)} {t(types[id]?.unit ?? "kg")}</span>
           </li>
         ))}
       </ul>

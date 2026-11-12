@@ -140,7 +140,7 @@ function Summary() {
       <PageHead title={t("summaryTitle")} sub={<>{lang === "kk" ? "Кезең" : "Период"}: <span className="inline-block first-letter:uppercase">{periodLabel}</span> · {lang === "kk" ? "тек қабылданған есептер" : "только принятые отчёты"}</>}>
         <button type="button" className="btn-primary" onClick={exportExcel} disabled={loading || entries.length === 0}><Download className="h-4 w-4" />{t("exportExcel")}</button>
       </PageHead>
-      <div className="card mb-5 flex flex-wrap items-center gap-3 !py-3">
+      <div className="card mb-6 flex flex-wrap items-center gap-3 !py-4">
         <div className="seg">
           {(["month", "quarter", "year"] as Mode[]).map((m) => (
             <button key={m} type="button" onClick={() => setMode(m)} className={mode === m ? "seg-on" : "seg-off"}>{t(m)}</button>
@@ -165,10 +165,10 @@ function Summary() {
         </div>
       </div>
 
-      <div className={`mb-5 rounded-xl border px-4 py-3 sm:px-5 ${missing.length ? "border-[#f2dfb5] bg-[#fdf8ea]" : "border-[#bfe6d8] bg-mint"}`}>
+      <div className={`mb-6 rounded-xl border px-4 py-3 sm:px-5 ${missing.length ? "border-[#f2dfb5] bg-[#fdf8ea]" : "border-[#bfe6d8] bg-mint"}`}>
         <h2 className={`flex items-center gap-2 text-[14px] font-semibold ${missing.length ? "mb-2 text-[#8a5a00]" : "text-leafdark"}`}>{missing.length ? <TriangleAlert className="h-4 w-4" /> : <CircleCheck className="h-4 w-4" />}{missing.length ? t("notSubmitted") : t("allSubmitted")}</h2>
         {missing.length > 0 && (
-          <ul className="grid gap-x-8 text-[13.5px] sm:grid-cols-2">
+          <ul className="grid gap-x-8 text-[14px] sm:grid-cols-2">
             {missing.map((x, i) => (
               <li key={i} className="flex justify-between gap-2 border-t border-[#f2dfb5] py-1.5">
                 <span>{nm(x.org, lang)}</span>
@@ -199,9 +199,9 @@ function Summary() {
                 </tr>,
                 ...ids.map((tid) => (
                   <tr key={o.id + tid} className="border-t border-line">
-                    <td className="td !pl-8 text-[13px] text-[#3c4257]">{nm(typeById[tid], lang)}</td>
-                    {months.map((m) => <td key={m} className="td num text-right text-[13px]">{byType[tid][m] ? fmt(byType[tid][m]) : "—"}</td>)}
-                    <td className="td num text-right text-[13px] font-medium">{fmt(months.reduce((s, m) => s + (byType[tid][m] || 0), 0))} {t(typeById[tid]?.unit ?? "kg")}</td>
+                    <td className="td !pl-8 text-[14px] text-ink">{nm(typeById[tid], lang)}</td>
+                    {months.map((m) => <td key={m} className="td num text-right text-[14px]">{byType[tid][m] ? fmt(byType[tid][m]) : "—"}</td>)}
+                    <td className="td num text-right text-[14px] font-semibold">{fmt(months.reduce((s, m) => s + (byType[tid][m] || 0), 0))} {t(typeById[tid]?.unit ?? "kg")}</td>
                   </tr>
                 )),
               ];

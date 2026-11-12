@@ -8,7 +8,7 @@ import { useI18n, nm, monthName } from "@/lib/i18n";
 import { fmt, co2 as co2calc, type Disposal, type Entry, type Org, type WasteType } from "@/lib/supabase";
 import { loadRefs, loadRegistry } from "@/lib/data";
 
-const COLORS = ["#0b7a5b", "#3b6fd4", "#e0a526", "#8b6fd6", "#d8607e", "#2aa7a1", "#8792a2", "#c9d1dc"];
+const COLORS = ["#16192c", "#3d5a9e", "#7f9bd4", "#b9c6e2", "#dfe3ea", "#8a93a6", "#c9a24a", "#d8607e"];
 const ANOMALY = 0.2; // рост более чем на 20 % к среднему предыдущих месяцев
 
 // Рекомендации по сокращению — по ключевым словам вида отхода
@@ -113,7 +113,7 @@ function Dashboard() {
   if (loading) return <div className="text-[14px] text-mute">{t("loading")}</div>;
 
   const period = months.length ? `${monthName(months[0] + "-01", lang)} – ${monthName(months[months.length - 1] + "-01", lang)}` : "";
-  const tip = { contentStyle: { borderRadius: 8, border: "1px solid #e3e8ee", boxShadow: "0 4px 12px rgba(26,31,54,.08)", fontSize: 12.5, padding: "8px 10px" }, cursor: { fill: "#f6f8fa" } };
+  const tip = { contentStyle: { borderRadius: 8, border: "1px solid #e3e8ee", fontSize: 12.5, padding: "8px 10px" }, cursor: { fill: "#f6f8fa" } };
 
   return (
     <>
@@ -125,7 +125,7 @@ function Dashboard() {
         )}
       </PageHead>
 
-      <div className="card mb-5 grid grid-cols-2 !p-0 lg:grid-cols-4">
+      <div className="card mb-6 grid grid-cols-2 !p-0 lg:grid-cols-4">
         <Kpi label={t("kpiMass")} value={total >= 1000 ? fmt(total / 1000) : fmt(total)} unit={total >= 1000 ? "т" : t("kg")}
           chip={delta != null ? { text: `${delta > 0 ? "+" : ""}${Math.round(delta * 100)}%`, tone: delta > 0.05 ? "bad" : delta < -0.05 ? "good" : "flat" } : undefined}
           sub={last && prev ? `${monthName(last + "-01", lang, false)} / ${monthName(prev + "-01", lang, false)}` : ""} />
@@ -136,14 +136,14 @@ function Dashboard() {
           sub={`${lang === "kk" ? "жарамды" : "пригодно"}: ${total ? Math.round((recyclable / total) * 100) : 0}%${partial > 0 ? ` + ${Math.round((partial / total) * 100)}% ${lang === "kk" ? "ішінара" : "частично"}` : ""}`} className="border-t border-l border-line lg:border-t-0" />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <div className="card lg:col-span-2">
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="h2">{t("chDynamics")}</h2>
             {quarters.length > 1 && (
-              <p className="text-[12.5px] text-mute">
+              <p className="text-[14px] text-mute">
                 {quarters.map((q, i) => (
-                  <span key={q}>{i > 0 && <span className="mx-1.5 text-faint">/</span>}{q.slice(5)} {q.slice(0, 4)}: <b className="num font-medium text-ink">{fmt(qSum(q))} {t("kg")}</b>
+                  <span key={q}>{i > 0 && <span className="mx-1.5 text-faint">/</span>}{q.slice(5)} {q.slice(0, 4)}: <b className="num font-semibold text-ink">{fmt(qSum(q))} {t("kg")}</b>
                     {q === qOf(curM) ? <span> ({lang === "kk" ? "толық емес" : "неполный"})</span> : i > 0 && qSum(quarters[i - 1]) > 0 && <span className="num"> ({qSum(q) > qSum(quarters[i - 1]) ? "+" : ""}{Math.round(((qSum(q) - qSum(quarters[i - 1])) / qSum(quarters[i - 1])) * 100)}%)</span>}
                   </span>
                 ))}
@@ -177,12 +177,12 @@ function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <ul className="min-w-0 space-y-1.5 text-[13px]">
+            <ul className="min-w-0 space-y-1.5 text-[14px]">
               {struct.map((x, i) => (
                 <li key={x.name} className="flex items-center gap-2">
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
-                  <span className="min-w-0 flex-1 truncate text-[#3c4257]">{x.name}</span>
-                  <span className="num font-medium">{total ? Math.round((x.value / total) * 100) : 0}%</span>
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: COLORS[i % COLORS.length] }} />
+                  <span className="min-w-0 flex-1 truncate text-ink">{x.name}</span>
+                  <span className="num font-semibold">{total ? Math.round((x.value / total) * 100) : 0}%</span>
                 </li>
               ))}
             </ul>
@@ -194,27 +194,27 @@ function Dashboard() {
           <ul className="space-y-3">
             {cmp.map((x) => (
               <li key={x.name}>
-                <div className="mb-1 flex justify-between text-[13px]"><span className="text-[#3c4257]">{x.name}</span><span className="num font-medium">{fmt(x.value)} {t("kg")}</span></div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className="h-full rounded-full bg-leaf" style={{ width: `${cmp[0]?.value ? Math.max(2, (x.value / cmp[0].value) * 100) : 0}%` }} /></div>
+                <div className="mb-1 flex justify-between text-[14px]"><span className="text-ink">{x.name}</span><span className="num font-semibold">{fmt(x.value)} {t("kg")}</span></div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className="h-full rounded-full bg-ink" style={{ width: `${cmp[0]?.value ? Math.max(2, (x.value / cmp[0].value) * 100) : 0}%` }} /></div>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="card !p-0">
-          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+          <div className="flex items-center justify-between border-b border-line px-4 py-4 md:px-6">
             <h2 className="h2 flex items-center gap-2"><TriangleAlert className="h-4 w-4 text-amber" />{t("anomalies")}</h2>
-            {last && <span className="text-[12.5px] inline-block first-letter:uppercase text-mute">{monthName(last + "-01", lang, false)} · {lang === "kk" ? "орташаға қарағанда" : "к среднему"} +{Math.round(ANOMALY * 100)}%</span>}
+            {last && <span className="text-[14px] inline-block first-letter:uppercase text-mute">{monthName(last + "-01", lang, false)} · {lang === "kk" ? "орташаға қарағанда" : "к среднему"} +{Math.round(ANOMALY * 100)}%</span>}
           </div>
-          {anomalies.length === 0 ? <p className="px-5 py-8 text-center text-[13.5px] text-mute">{t("noAnomalies")}</p> : (
+          {anomalies.length === 0 ? <p className="px-5 py-8 text-center text-[14px] text-mute">{t("noAnomalies")}</p> : (
             <ul className="divide-y divide-line">
               {anomalies.map((a, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 px-5 py-2.5">
+                <li key={i} className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 md:px-6">
                   <div className="min-w-0">
-                    <div className="truncate text-[13.5px] font-medium">{nm(a.type, lang)}</div>
+                    <div className="truncate text-[14px] font-semibold">{nm(a.type, lang)}</div>
                     <div className="num truncate text-[12px] text-mute">{short(a.org)} · {fmt(a.avg)} – {fmt(a.now)} {t(a.type.unit)}</div>
                   </div>
-                  <span className="num inline-flex items-center gap-1 rounded-md bg-[#fdeaf0] px-2 py-[3px] text-[12px] font-medium text-[#a8284c]"><TrendingUp className="h-3 w-3" />+{Math.round(a.pct * 100)}%</span>
+                  <span className="num inline-flex items-center gap-1 rounded-md bg-[#fdeaf0] px-2 py-[3px] text-[12px] font-semibold text-[#a8284c]"><TrendingUp className="h-3 w-3" />+{Math.round(a.pct * 100)}%</span>
                 </li>
               ))}
             </ul>
@@ -222,20 +222,20 @@ function Dashboard() {
         </div>
 
         <div className="card !p-0">
-          <div className="flex items-center justify-between border-b border-line px-5 py-3">
+          <div className="flex items-center justify-between border-b border-line px-4 py-4 md:px-6">
             <h2 className="h2 flex items-center gap-2"><Leaf className="h-4 w-4 text-leaf" />{t("recommendations")}</h2>
-            <span className="text-[12.5px] text-mute">DEFRA 2024</span>
+            <span className="text-[14px] text-mute">DEFRA 2024</span>
           </div>
           <ul className="divide-y divide-line">
             {potTop.map(([name, p]) => (
-              <li key={name} className="flex items-center justify-between gap-3 px-5 py-2.5">
-                <span className="min-w-0"><span className="block truncate text-[13.5px] font-medium">{name}</span><span className="num block truncate text-[12px] text-mute">{fmt(p.kg)} {t("kg")} · {p.rec}</span></span>
-                <span className="num whitespace-nowrap rounded-md bg-mint px-2 py-[3px] text-[12px] font-medium text-leafdark">−{fmt(p.co2)} кг CO₂e</span>
+              <li key={name} className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 md:px-6">
+                <span className="min-w-0"><span className="block truncate text-[14px] font-semibold">{name}</span><span className="num block truncate text-[12px] text-mute">{fmt(p.kg)} {t("kg")} · {p.rec}</span></span>
+                <span className="num whitespace-nowrap rounded-md bg-mint px-2 py-[3px] text-[12px] font-semibold text-leafdark">−{fmt(p.co2)} кг CO₂e</span>
               </li>
             ))}
           </ul>
           {tips.length > 0 && (
-            <ul className="space-y-2 border-t border-line bg-wash px-5 py-4 text-[13px] text-[#3c4257]">
+            <ul className="space-y-2 border-t border-line bg-wash px-4 py-4 md:px-6 text-[14px] text-ink">
               {tips.map((s, i) => <li key={i} className="flex gap-2"><span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-faint" /><span>{s}</span></li>)}
             </ul>
           )}
@@ -248,13 +248,13 @@ function Dashboard() {
 function Kpi({ label, value, unit, sub, chip, accent, className = "" }: { label: string; value: string; unit: string; sub?: string; chip?: { text: string; tone: "good" | "bad" | "flat" }; accent?: boolean; className?: string }) {
   const tone = { good: "bg-mint text-leafdark", bad: "bg-[#fdeaf0] text-[#a8284c]", flat: "bg-[#f0f2f5] text-[#545969]" };
   return (
-    <div className={`min-w-0 p-4 sm:p-5 ${className}`}>
+    <div className={`min-w-0 p-4 md:p-6 ${className}`}>
       <div className="eyebrow truncate">{label}</div>
       <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <span className={`num text-[28px] font-semibold leading-none tracking-[-0.025em] ${accent ? "text-leaf" : ""}`}>{value}<span className="ml-1 text-[13.5px] font-normal tracking-normal text-mute">{unit}</span></span>
-        {chip && <span className={`num rounded-md px-1.5 py-0.5 text-[12px] font-medium ${tone[chip.tone]}`}>{chip.text}</span>}
+        <span className={`num text-[28px] font-semibold leading-none tracking-[-0.025em] ${accent ? "text-leaf" : ""}`}>{value}<span className="ml-1 text-[14px] font-normal tracking-normal text-mute">{unit}</span></span>
+        {chip && <span className={`num rounded-md px-1.5 py-0.5 text-[12px] font-semibold ${tone[chip.tone]}`}>{chip.text}</span>}
       </div>
-      {sub && <div className="mt-2 truncate text-[12.5px] text-mute">{sub}</div>}
+      {sub && <div className="mt-2 truncate text-[14px] text-mute">{sub}</div>}
     </div>
   );
 }

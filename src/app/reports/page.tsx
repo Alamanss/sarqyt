@@ -41,12 +41,12 @@ function List() {
       <PageHead title={isResp ? t("myReports") : t("navReports")} sub={lang === "kk" ? "Ұйымдардың айлық есептері" : "Месячные отчёты организаций и их статусы"}>
         {!isResp && (
           <div className="seg">
-            <button type="button" onClick={() => setFilter("queue")} className={filter === "queue" ? "seg-on" : "seg-off"}>{t("queue")} <span className="num ml-1 rounded bg-[#fdf3dc] px-1.5 text-[11.5px] text-[#8a5a00]">{queue.length}</span></button>
+            <button type="button" onClick={() => setFilter("queue")} className={filter === "queue" ? "seg-on" : "seg-off"}>{t("queue")} <span className="num ml-1 rounded bg-[#fdf3dc] px-1.5 text-[12px] text-[#8a5a00]">{queue.length}</span></button>
             <button type="button" onClick={() => setFilter("all")} className={filter === "all" ? "seg-on" : "seg-off"}>{t("allReports")}</button>
           </div>
         )}
       </PageHead>
-      {shown.length === 0 ? <div className="card py-10 text-center text-[13.5px] text-mute">{lang === "kk" ? "Тексеруді күтіп тұрған есеп жоқ" : "Нет отчётов, ожидающих проверки"}</div> : (
+      {shown.length === 0 ? <div className="card py-10 text-center text-[14px] text-mute">{lang === "kk" ? "Тексеруді күтіп тұрған есеп жоқ" : "Нет отчётов, ожидающих проверки"}</div> : (
         <div className="card overflow-x-auto !p-0">
           <table className="w-full min-w-[560px]">
             <thead className="border-b border-line bg-wash"><tr>
@@ -55,8 +55,8 @@ function List() {
             <tbody className="divide-y divide-line">
               {shown.map((r) => (
                 <tr key={r.id} className="cursor-pointer" onClick={() => router.push(`/reports?id=${r.id}`)}>
-                  <td className="td font-medium first-letter:uppercase"><Link href={`/reports?id=${r.id}`}>{monthName(r.period_start, lang)}</Link></td>
-                  <td className="td text-[#3c4257]">{nm(orgById[r.org_id], lang)}</td>
+                  <td className="td font-semibold first-letter:uppercase"><Link href={`/reports?id=${r.id}`}>{monthName(r.period_start, lang)}</Link></td>
+                  <td className="td text-ink">{nm(orgById[r.org_id], lang)}</td>
                   <td className="td"><StatusBadge status={r.status} /></td>
                   <td className="td num text-right">{counts[r.id] ?? "…"}</td>
                   <td className="td num text-mute">{r.submitted_at ? dateRu(r.submitted_at.slice(0, 10)) : "—"}</td>
@@ -134,7 +134,7 @@ function Detail({ id }: { id: string }) {
 
   return (
     <>
-      <button type="button" onClick={() => router.push("/reports")} className="mb-3 inline-flex items-center gap-1 text-[13px] font-medium text-mute hover:text-ink"><ArrowLeft className="h-3.5 w-3.5" />{t("navReports")}</button>
+      <button type="button" onClick={() => router.push("/reports")} className="link mb-4"><ArrowLeft className="h-3.5 w-3.5" />{t("navReports")}</button>
       <PageHead title={<span className="inline-block first-letter:uppercase">{monthName(report.period_start, lang)}</span>} sub={<>{nm(org, lang)} · <span className="num">{dateRu(report.period_start)} – {dateRu(report.period_end)}</span> · {entriesLabel(entries.length, lang)}</>}>
         <StatusBadge status={report.status} />
       </PageHead>
@@ -143,18 +143,18 @@ function Detail({ id }: { id: string }) {
         <div className="note note-err mb-4 flex gap-2.5"><MessageSquareWarning className="mt-0.5 h-4 w-4 shrink-0" /><span><b className="block font-semibold">{t("reviewerComment")}</b>{lastReturn.comment}</span></div>
       )}
       {mine && editable && (
-        <Link href={`/entry?m=${report.period_start.slice(0, 7)}`} className="btn-primary mb-4"><PenLine className="h-4 w-4" />{lang === "kk" ? "Жазбаларды түзету" : "Исправить записи"}</Link>
+        <Link href={`/entry?m=${report.period_start.slice(0, 7)}`} className="btn-primary mb-6"><PenLine className="h-4 w-4" />{lang === "kk" ? "Жазбаларды түзету" : "Исправить записи"}</Link>
       )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
         <div className="grid h-fit gap-4">
           <div className="card">
             <div className="mb-3 flex items-baseline justify-between"><h2 className="h2">{t("totalsMonth")}</h2><span className="num text-[15px] font-semibold">{fmt(kg)} {t("kg")}{l > 0 ? ` + ${fmt(l)} ${t("l")}` : ""}</span></div>
-            <ul className="grid gap-x-8 text-[13.5px] sm:grid-cols-2">
+            <ul className="grid gap-x-8 text-[14px] sm:grid-cols-2">
               {Object.entries(totals).sort((a, b) => b[1] - a[1]).map(([tid, v]) => (
                 <li key={tid} className="flex justify-between gap-2 border-b border-line py-1.5">
-                  <span className="truncate text-[#3c4257]">{nm(typeById[tid], lang)}</span>
-                  <b className="num font-medium">{fmt(v)} {t(typeById[tid]?.unit ?? "kg")}</b>
+                  <span className="truncate text-ink">{nm(typeById[tid], lang)}</span>
+                  <b className="num font-semibold">{fmt(v)} {t(typeById[tid]?.unit ?? "kg")}</b>
                 </li>
               ))}
             </ul>
@@ -192,7 +192,7 @@ function Detail({ id }: { id: string }) {
               <label className="label" htmlFor="c">{t("comment")}</label>
               <textarea id="c" className="field mb-3 min-h-24 py-2" value={comment} onChange={(e) => setComment(e.target.value)} />
               {err && <p className="note note-err mb-3" role="alert">{err}</p>}
-              <div className="grid gap-2">
+              <div className="grid gap-3">
                 <button type="button" className="btn-primary" disabled={busy} onClick={() => decide(true)}><Check className="h-4 w-4" />{t("accept")}</button>
                 <button type="button" className="btn-danger" disabled={busy} onClick={() => decide(false)}><CornerUpLeft className="h-4 w-4" />{t("returnBack")}</button>
               </div>
@@ -205,8 +205,8 @@ function Detail({ id }: { id: string }) {
                 <li key={h.id} className="relative">
                   <span className="absolute -left-[21px] top-[7px] h-2 w-2 rounded-full bg-faint ring-4 ring-paper" />
                   <div className="flex flex-wrap items-center gap-2"><StatusBadge status={h.to_status} /><span className="num text-[12px] text-mute">{new Date(h.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></div>
-                  <div className="mt-1 text-[13px] text-mute">{people[h.user_id ?? ""]?.full_name ?? "—"}{people[h.user_id ?? ""] ? ` · ${t(("role_" + people[h.user_id ?? ""].role) as Key)}` : ""}</div>
-                  {h.comment && <div className="mt-1.5 rounded-md border border-line bg-wash px-2.5 py-1.5 text-[13px]">{h.comment}</div>}
+                  <div className="mt-1 text-[14px] text-mute">{people[h.user_id ?? ""]?.full_name ?? "—"}{people[h.user_id ?? ""] ? ` · ${t(("role_" + people[h.user_id ?? ""].role) as Key)}` : ""}</div>
+                  {h.comment && <div className="mt-1.5 rounded-md border border-line bg-wash px-2.5 py-1.5 text-[14px]">{h.comment}</div>}
                 </li>
               ))}
             </ol>

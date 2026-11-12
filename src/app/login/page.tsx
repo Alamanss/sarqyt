@@ -44,12 +44,12 @@ function LoginForm() {
           <LangSwitch />
         </div>
         <form onSubmit={submit} className="my-auto w-full max-w-[360px] py-10">
-          <h1 className="text-[26px] font-semibold tracking-[-0.025em]">{lang === "kk" ? "Жүйеге кіру" : "Вход в систему"}</h1>
+          <h1 className="h1">{lang === "kk" ? "Жүйеге кіру" : "Вход в систему"}</h1>
           <p className="mt-1.5 mb-7 text-[14px] text-mute">{t("appSub")}</p>
           <label className="label" htmlFor="email">{t("email")}</label>
           <input id="email" className="field mb-4" type="email" autoComplete="username" placeholder="name@atu.edu.kz" value={email} onChange={(e) => setEmail(e.target.value)} required />
           <label className="label" htmlFor="pw">{t("password")}</label>
-          <input id="pw" className="field mb-5" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input id="pw" className="field mb-6" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           {err && <p className="note note-err mb-4" role="alert">{err}</p>}
           <button className="btn-primary w-full" disabled={busy}>{busy ? t("loading") : t("login")}{!busy && <ArrowRight className="h-4 w-4" />}</button>
 
@@ -58,9 +58,9 @@ function LoginForm() {
             <div className="overflow-hidden rounded-lg border border-line">
               {DEMO.map(([em, name, role], i) => (
                 <button type="button" key={em} onClick={() => setEmail(em)}
-                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-wash ${i ? "border-t border-line" : ""} ${email === em ? "bg-mint" : ""}`}>
-                  <span className="min-w-0"><span className="block truncate text-[13px] font-medium">{name}</span><span className="block truncate text-[12px] text-mute">{role}</span></span>
-                  <span className="shrink-0 font-mono text-[11.5px] text-faint">{em}</span>
+                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-wash ${i ? "border-t border-line" : ""} ${email === em ? "bg-wash" : ""}`}>
+                  <span className="min-w-0"><span className="block truncate text-[14px] font-semibold">{name}</span><span className="block truncate text-[12px] text-mute">{role}</span></span>
+                  <span className="shrink-0 font-mono text-[12px] text-faint">{em}</span>
                 </button>
               ))}
             </div>
@@ -70,10 +70,9 @@ function LoginForm() {
       </div>
 
       <div className="relative hidden overflow-hidden bg-cream lg:block">
-        <div className="absolute inset-0 [background-image:linear-gradient(#e3e8ee_1px,transparent_1px),linear-gradient(90deg,#e3e8ee_1px,transparent_1px)] [background-size:44px_44px] [mask-image:radial-gradient(ellipse_at_60%_40%,#000_10%,transparent_70%)]" />
         <div className="relative flex h-full flex-col justify-center px-16">
           <p className="eyebrow mb-3">{lang === "kk" ? "Толық цикл" : "Полный цикл учёта"}</p>
-          <p className="max-w-lg text-[34px] font-semibold leading-[1.15] tracking-[-0.03em]">
+          <p className="max-w-lg text-[32px] font-semibold leading-10 tracking-[-0.02em]">
             {lang === "kk" ? "Таразыдан есепке дейін — қағазсыз." : "От взвешивания до отчёта — без бумажных таблиц."}
           </p>
           <ol className="mt-10 grid max-w-lg gap-0">
@@ -83,10 +82,10 @@ function LoginForm() {
             ).map(([h, p], i, a) => (
               <li key={h} className="flex gap-4">
                 <span className="flex flex-col items-center">
-                  <span className="grid h-7 w-7 place-items-center rounded-full border border-line bg-paper text-[12px] font-semibold text-leaf shadow-[0_1px_2px_rgba(26,31,54,.06)]">{i + 1}</span>
+                  <span className="grid h-7 w-7 place-items-center rounded-full border border-line bg-paper text-[12px] font-semibold text-ink">{i + 1}</span>
                   {i < a.length - 1 && <span className="w-px flex-1 bg-line" />}
                 </span>
-                <span className="pb-6"><span className="block text-[14.5px] font-semibold">{h}</span><span className="block text-[13.5px] text-mute">{p}</span></span>
+                <span className="pb-6"><span className="block text-[15px] font-semibold">{h}</span><span className="block text-[14px] text-mute">{p}</span></span>
               </li>
             ))}
           </ol>

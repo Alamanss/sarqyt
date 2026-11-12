@@ -47,7 +47,7 @@ function Registry() {
   return (
     <>
       <PageHead title={t("navRegistry")} sub={t("registryTitle")}>
-        <div className="text-right"><div className="eyebrow">{entriesLabel(rows.length, lang)}</div><div className="num text-[18px] font-semibold tracking-[-0.01em]">{fmt(kg)} {t("kg")}{l > 0 && <span className="ml-1.5 text-[13px] font-medium text-mute">+ {fmt(l)} {t("l")}</span>}</div></div>
+        <div className="text-right"><div className="eyebrow">{entriesLabel(rows.length, lang)}</div><div className="num text-[18px] font-semibold tracking-[-0.01em]">{fmt(kg)} {t("kg")}{l > 0 && <span className="ml-1.5 text-[14px] font-semibold text-mute">+ {fmt(l)} {t("l")}</span>}</div></div>
       </PageHead>
       <div className="card mb-4 grid grid-cols-2 gap-3 md:grid-cols-5">
         <div><label className="label" htmlFor="f">{t("from")}</label><input id="f" type="date" className="field" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
@@ -79,7 +79,7 @@ function Registry() {
                   <td className="td num whitespace-nowrap">{dateRu(e.entry_date)}</td>
                   <td className="td">{nm(orgById[e.org_id], lang)}</td>
                   <td className="td">{nm(typeById[e.waste_type_id], lang)}</td>
-                  <td className="td num text-right font-medium whitespace-nowrap">{fmt(Number(e.quantity))} {t(typeById[e.waste_type_id]?.unit ?? "kg")}</td>
+                  <td className="td num text-right font-semibold whitespace-nowrap">{fmt(Number(e.quantity))} {t(typeById[e.waste_type_id]?.unit ?? "kg")}</td>
                   <td className="td text-mute">{nm(dispById[e.disposal_id ?? ""], lang)}</td>
                   <td className="td text-mute">{people[e.responsible_id ?? ""]?.full_name ?? "—"}</td>
                 </tr>

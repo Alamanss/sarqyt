@@ -68,7 +68,7 @@ function Admin() {
   return (
     <>
       <PageHead title={t("navAdmin")} sub={lang === "kk" ? "Ұйымдар, пайдаланушылар, анықтамалықтар және интеграциялар" : "Организации, пользователи, справочники и интеграции"} />
-      <div className="seg mb-5 flex-wrap">
+      <div className="seg mb-6 flex-wrap">
         {([["orgs", t("adminOrgs")], ["users", t("adminUsers")], ["types", t("adminTypes")], ["tools", lang === "kk" ? "Интеграциялар" : "Интеграции"]] as const).map(([k, label]) => (
           <button key={k} type="button" onClick={() => { setTab(k); setMsg(""); }} className={tab === k ? "seg-on" : "seg-off"}>{label}</button>
         ))}
@@ -83,11 +83,11 @@ function Admin() {
               <tbody className="divide-y divide-line">
                 {refs.orgs.map((o) => (
                   <tr key={o.id} className={o.active ? "" : "opacity-50"}>
-                    <td className="td font-medium">{nm(o, lang)}<div className="text-[12px] font-normal text-mute">{users.filter((x) => x.org_id === o.id).map((x) => x.full_name).join(", ") || "—"}</div></td>
+                    <td className="td font-semibold">{nm(o, lang)}<div className="text-[12px] font-normal text-mute">{users.filter((x) => x.org_id === o.id).map((x) => x.full_name).join(", ") || "—"}</div></td>
                     <td className="td">{ORG_TYPES.find((x) => x[0] === o.type)?.[lang === "kk" ? 2 : 1]}</td>
                     <td className="td text-mute">{o.building ?? "—"}</td>
-                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#0b7a5b]" checked={o.active} onChange={() => toggleOrg(o)} aria-label={t("active")} /></td>
-                    <td className="td"><button type="button" className="inline-flex items-center gap-1.5 rounded-md border border-[#d5dbe1] px-2 py-1 text-[12.5px] font-medium hover:bg-wash" onClick={() => showQr(o)}><QrCode className="h-3.5 w-3.5" />QR</button></td>
+                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#16192c]" checked={o.active} onChange={() => toggleOrg(o)} aria-label={t("active")} /></td>
+                    <td className="td"><button type="button" className="inline-flex items-center gap-1.5 rounded-md border border-[#d5dbe1] px-2 py-1 text-[14px] font-semibold hover:bg-wash" onClick={() => showQr(o)}><QrCode className="h-3.5 w-3.5" />QR</button></td>
                   </tr>
                 ))}
               </tbody>
@@ -112,7 +112,7 @@ function Admin() {
               <tbody className="divide-y divide-line">
                 {users.map((x) => (
                   <tr key={x.id}>
-                    <td className="td font-medium">{x.full_name}<div className="text-[12px] font-normal text-mute">{x.email}</div></td>
+                    <td className="td font-semibold">{x.full_name}<div className="text-[12px] font-normal text-mute">{x.email}</div></td>
                     <td className="td"><select className="field !min-h-9 !w-auto !text-[14px]" value={x.role} onChange={(e) => setUser(x.id, { role: e.target.value as Role })}>{ROLES.map((r) => <option key={r} value={r}>{t(("role_" + r) as Key)}</option>)}</select></td>
                     <td className="td"><select className="field !min-h-9 !text-[14px]" value={x.org_id ?? ""} onChange={(e) => setUser(x.id, { org_id: e.target.value || null })}><option value="">—</option>{refs.orgs.map((o) => <option key={o.id} value={o.id}>{nm(o, lang)}</option>)}</select></td>
                     <td className="td text-mute">{x.telegram_chat_id ? <Check className="h-4 w-4 text-leaf" /> : "—"}</td>
@@ -143,12 +143,12 @@ function Admin() {
               <tbody className="divide-y divide-line">
                 {refs.types.map((x) => (
                   <tr key={x.id} className={x.active ? "" : "opacity-50"}>
-                    <td className="td font-medium">{nm(x, lang)}</td>
+                    <td className="td font-semibold">{nm(x, lang)}</td>
                     <td className="td text-mute">{x.org_id ? nm(orgById[x.org_id], lang) : t("all")}</td>
                     <td className="td">{t(x.unit)}</td>
                     <td className="td text-mute">{nm(dispById[x.recommended_disposal_id ?? ""], lang)}</td>
                     <td className="td num text-right">{x.co2_landfill ?? "—"}</td>
-                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#0b7a5b]" checked={x.active} onChange={() => toggleType(x)} aria-label={t("active")} /></td>
+                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#16192c]" checked={x.active} onChange={() => toggleType(x)} aria-label={t("active")} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -179,7 +179,7 @@ function Admin() {
           <div className="card">
             <h2 className="h2 mb-2">API электронных весов</h2>
             <p className="mb-2 text-[14px] text-mute">Весы (Трек 2) отправляют взвешивание напрямую в журнал организации:</p>
-            <pre className="overflow-x-auto rounded-lg border border-line bg-wash p-3 font-mono text-[12px] leading-relaxed text-[#3c4257]">{`POST /api/scale
+            <pre className="overflow-x-auto rounded-lg border border-line bg-wash p-3 font-mono text-[12px] leading-relaxed text-ink">{`POST /api/scale
 x-api-key: <ключ весов>
 { "org": "iskander", "waste": "Очистки овощей",
   "weight": 4.2, "device": "scale-01" }`}</pre>

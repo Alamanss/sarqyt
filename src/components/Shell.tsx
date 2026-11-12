@@ -19,7 +19,7 @@ const NAV: { href: string; key: Key; roles: Role[]; icon: LucideIcon }[] = [
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#0b7a5b" />
+      <rect width="32" height="32" rx="8" fill="#16192c" />
       <path d="M22.5 16a6.5 6.5 0 1 1-2.2-4.9" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
       <path d="M17.6 9.6l3 1.4-1.3 3" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -66,13 +66,13 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
           <Logo />
           <span className="leading-tight">
             <span className="block text-[14px] font-semibold tracking-[-0.01em]">ZeroWaste ATU</span>
-            <span className="block text-[11.5px] text-mute">{lang === "kk" ? "Қалдықтарды есепке алу" : "Учёт пищевых отходов"}</span>
+            <span className="block text-[12px] text-mute">{lang === "kk" ? "Қалдықтарды есепке алу" : "Учёт пищевых отходов"}</span>
           </span>
         </Link>
         {org && (
-          <div className="mx-3 mb-2 rounded-lg border border-line bg-wash px-3 py-2">
-            <div className="text-[11px] font-medium text-mute">{t("organization")}</div>
-            <div className="text-[13px] font-medium leading-snug">{nm(org, lang)}</div>
+          <div className="mx-3 mb-2 rounded-lg border border-line px-3 py-2">
+            <div className="text-[12px] font-semibold text-mute">{t("organization")}</div>
+            <div className="text-[14px] font-semibold leading-snug">{nm(org, lang)}</div>
           </div>
         )}
         <nav className="flex flex-col gap-0.5 px-3 py-2">
@@ -80,8 +80,8 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
             const on = isOn(n.href);
             return (
               <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined}
-                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-medium transition ${on ? "bg-mint text-leafdark" : "text-[#3c4257] hover:bg-wash"}`}>
-                <n.icon className={`h-[17px] w-[17px] ${on ? "text-leaf" : "text-faint"}`} strokeWidth={1.9} />
+                className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-[14px] transition-colors ${on ? "bg-wash font-semibold text-ink" : "font-normal text-mute hover:bg-wash hover:text-ink"}`}>
+                <n.icon className={`h-[17px] w-[17px] ${on ? "text-ink" : "text-faint"}`} strokeWidth={on ? 2.2 : 1.8} />
                 {t(n.key)}
               </Link>
             );
@@ -89,15 +89,15 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
         </nav>
         <div className="mt-auto border-t border-line p-3">
           <div className="flex items-center gap-2.5 px-1.5 pb-3">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-mint text-[12px] font-semibold text-leafdark">{initials}</span>
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-line bg-wash text-[12px] font-semibold text-ink">{initials}</span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-[13px] font-medium">{profile.full_name}</span>
-              <span className="block truncate text-[11.5px] text-mute">{t(("role_" + profile.role) as Key)}</span>
+              <span className="block truncate text-[14px] font-semibold">{profile.full_name}</span>
+              <span className="block truncate text-[12px] text-mute">{t(("role_" + profile.role) as Key)}</span>
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <LangSwitch />
-            <button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12.5px] font-medium text-mute hover:bg-wash hover:text-ink">
+            <button type="button" onClick={signOut} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[14px] font-semibold text-mute hover:bg-wash hover:text-ink">
               <LogOut className="h-4 w-4" strokeWidth={1.9} />{t("logout")}
             </button>
           </div>
@@ -105,25 +105,25 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
       </aside>
 
       {/* шапка — телефон */}
-      <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-line bg-paper/95 px-4 py-2.5 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-line bg-paper px-4 py-2.5 md:hidden">
         <Logo size={30} />
         <span className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-[13.5px] font-semibold">{org ? nm(org, lang) : "ZeroWaste ATU"}</span>
-          <span className="block truncate text-[11.5px] text-mute">{profile.full_name} · {t(("role_" + profile.role) as Key)}</span>
+          <span className="block truncate text-[14px] font-semibold">{org ? nm(org, lang) : "ZeroWaste ATU"}</span>
+          <span className="block truncate text-[12px] text-mute">{profile.full_name} · {t(("role_" + profile.role) as Key)}</span>
         </span>
         <LangSwitch />
         <button type="button" onClick={signOut} aria-label={t("logout")} className="grid h-9 w-9 place-items-center rounded-lg text-mute hover:bg-wash"><LogOut className="h-[18px] w-[18px]" strokeWidth={1.9} /></button>
       </header>
 
-      <main className="mx-auto max-w-[1180px] px-4 pt-5 pb-24 md:px-8 md:pt-8 md:pb-12">{children}</main>
+      <main className="mx-auto max-w-[1200px] px-4 pt-6 pb-28 md:px-7 md:pt-8 md:pb-16">{children}</main>
 
       {/* нижнее меню — телефон */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] md:hidden">
         {items.slice(0, 5).map((n) => {
           const on = isOn(n.href);
           return (
-            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 pt-2 pb-1.5 text-[10.5px] font-medium ${on ? "text-leaf" : "text-faint"}`}>
-              <n.icon className="h-[21px] w-[21px]" strokeWidth={on ? 2.1 : 1.8} />
+            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 pt-2 pb-1.5 text-[12px] font-semibold ${on ? "font-semibold text-ink" : "text-faint"}`}>
+              <n.icon className="h-[22px] w-[22px]" strokeWidth={on ? 2.2 : 1.8} />
               <span className="max-w-full truncate px-1">{t(n.key)}</span>
             </Link>
           );
@@ -144,7 +144,7 @@ export function StatusBadge({ status }: { status: string }) {
   const { t } = useI18n();
   const [box, dot] = ST[status] ?? ST.draft;
   return (
-    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-[3px] text-[12px] font-medium ${box}`}>
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-[3px] text-[12px] font-semibold ${box}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />{t(("st_" + status) as Key)}
     </span>
   );
@@ -153,10 +153,10 @@ export function StatusBadge({ status }: { status: string }) {
 /** Заголовок страницы: название, пояснение и действия справа */
 export function PageHead({ title, sub, children }: { title: ReactNode; sub?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
         <h1 className="h1">{title}</h1>
-        {sub && <p className="mt-1 text-[13.5px] text-mute">{sub}</p>}
+        {sub && <p className="mt-1 text-[14px] leading-5 text-mute">{sub}</p>}
       </div>
       {children && <div className="flex flex-wrap items-center gap-2">{children}</div>}
     </div>

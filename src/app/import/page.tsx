@@ -121,16 +121,16 @@ function ImportInner() {
 
   return (
     <>
-      <Link href="/entry" className="mb-3 inline-flex items-center gap-1 text-[13px] font-medium text-mute hover:text-ink"><ArrowLeft className="h-3.5 w-3.5" />{t("navEntry")}</Link>
+      <Link href="/entry" className="link mb-4"><ArrowLeft className="h-3.5 w-3.5" />{t("navEntry")}</Link>
       <PageHead title={lang === "kk" ? "Деректерді импорттау" : "Импорт данных"} sub={nm(org, lang)} />
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
-        <button type="button" className="card text-left transition hover:border-leaf" onClick={() => xlsRef.current?.click()}>
-          <div className="h2 mb-1 flex items-center gap-2"><FileSpreadsheet className="h-4 w-4 text-leaf" />Excel</div>
-          <p className="text-[13.5px] text-mute">{lang === "kk" ? "Қолданыстағы кестені (.xlsx) жүктеу" : "Загрузить действующую таблицу учёта (.xlsx)"}</p>
+        <button type="button" className="card text-left transition-colors hover:border-ink" onClick={() => xlsRef.current?.click()}>
+          <div className="h2 mb-1 flex items-center gap-2"><FileSpreadsheet className="h-4 w-4" />Excel</div>
+          <p className="text-[14px] text-mute">{lang === "kk" ? "Қолданыстағы кестені (.xlsx) жүктеу" : "Загрузить действующую таблицу учёта (.xlsx)"}</p>
         </button>
-        <button type="button" className="card text-left transition hover:border-leaf" onClick={() => imgRef.current?.click()}>
-          <div className="h2 mb-1 flex items-center gap-2"><ScanText className="h-4 w-4 text-leaf" />{lang === "kk" ? "Қағаз бланк" : "Фото бумажного бланка"}</div>
-          <p className="text-[13.5px] text-mute">{lang === "kk" ? "ЖИ бланк жолдарын тани алады (OCR)" : "ИИ распознает строки заполненного бланка (OCR)"}</p>
+        <button type="button" className="card text-left transition-colors hover:border-ink" onClick={() => imgRef.current?.click()}>
+          <div className="h2 mb-1 flex items-center gap-2"><ScanText className="h-4 w-4" />{lang === "kk" ? "Қағаз бланк" : "Фото бумажного бланка"}</div>
+          <p className="text-[14px] text-mute">{lang === "kk" ? "ЖИ бланк жолдарын тани алады (OCR)" : "ИИ распознает строки заполненного бланка (OCR)"}</p>
         </button>
         <input ref={xlsRef} type="file" accept=".xlsx" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onExcel(f); e.target.value = ""; }} />
         <input ref={imgRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = ""; }} />
@@ -146,7 +146,7 @@ function ImportInner() {
               <tbody className="divide-y divide-line">
                 {rows.map((r, i) => (
                   <tr key={i} className={r.skip ? "opacity-40" : ""}>
-                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#0b7a5b]" checked={!r.skip} onChange={() => setRows(rows.map((x, k) => (k === i ? { ...x, skip: !x.skip } : x)))} aria-label="import" /></td>
+                    <td className="td"><input type="checkbox" className="h-4 w-4 accent-[#16192c]" checked={!r.skip} onChange={() => setRows(rows.map((x, k) => (k === i ? { ...x, skip: !x.skip } : x)))} aria-label="import" /></td>
                     <td className="td num whitespace-nowrap">{r.date ? dateRu(r.date) : "—"}</td>
                     <td className="td text-mute">{r.name}</td>
                     <td className="td">
