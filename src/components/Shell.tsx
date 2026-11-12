@@ -20,9 +20,11 @@ const NAV: { href: string; key: Key; roles: Role[]; icon: LucideIcon }[] = [
 
 export function Logo({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="var(--brand)" />
-      <path d="M21.2 11.4c-1.1-1.8-3-2.9-5.3-2.9-3 0-5.2 1.7-5.2 4 0 5.2 10.6 2.3 10.6 7.5 0 2.3-2.3 4-5.3 4-2.3 0-4.3-1.1-5.4-2.9" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="15" fill="var(--brand)" />
+      <path d="M12 30.500h40c0 11-9 20-20 20s-20-9-20-20z" fill="#fff" />
+      <rect x="25" y="50" width="14" height="4" rx="2" fill="#fff" />
+      <path d="M36 9.500c-6.200 0-8.200 3.700-4.800 6.800s1.200 6.900-5.200 6.900" fill="none" stroke="#fff" strokeWidth="3.700" strokeLinecap="round" />
     </svg>
   );
 }
