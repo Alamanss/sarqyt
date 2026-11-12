@@ -8,7 +8,7 @@ import { useI18n, nm, monthName } from "@/lib/i18n";
 import { fmt, co2 as co2calc, type Disposal, type Entry, type Org, type WasteType } from "@/lib/supabase";
 import { loadRefs, loadRegistry } from "@/lib/data";
 
-const COLORS = ["#16192c", "#3d5a9e", "#7f9bd4", "#b9c6e2", "#dfe3ea", "#8a93a6", "#c9a24a", "#d8607e"];
+const COLORS = ["#2f55e6", "#8da2f2", "#f0a23b", "#2aa7a1", "#c3cad8", "#8a93a6", "#d8607e", "#16192c"];
 const ANOMALY = 0.2; // рост более чем на 20 % к среднему предыдущих месяцев
 
 // Рекомендации по сокращению — по ключевым словам вида отхода
@@ -195,7 +195,7 @@ function Dashboard() {
             {cmp.map((x) => (
               <li key={x.name}>
                 <div className="mb-1 flex justify-between text-[14px]"><span className="text-ink">{x.name}</span><span className="num font-semibold">{fmt(x.value)} {t("kg")}</span></div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className="h-full rounded-full bg-ink" style={{ width: `${cmp[0]?.value ? Math.max(2, (x.value / cmp[0].value) * 100) : 0}%` }} /></div>
+                <div className="h-2 overflow-hidden rounded-full bg-[#eef1f5]"><div className="h-full rounded-full bg-brand" style={{ width: `${cmp[0]?.value ? Math.max(2, (x.value / cmp[0].value) * 100) : 0}%` }} /></div>
               </li>
             ))}
           </ul>

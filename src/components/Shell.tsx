@@ -19,7 +19,7 @@ const NAV: { href: string; key: Key; roles: Role[]; icon: LucideIcon }[] = [
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="#16192c" />
+      <rect width="32" height="32" rx="8" fill="var(--brand)" />
       <path d="M22.5 16a6.5 6.5 0 1 1-2.2-4.9" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
       <path d="M17.6 9.6l3 1.4-1.3 3" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -80,8 +80,8 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
             const on = isOn(n.href);
             return (
               <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined}
-                className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-[14px] transition-colors ${on ? "bg-wash font-semibold text-ink" : "font-normal text-mute hover:bg-wash hover:text-ink"}`}>
-                <n.icon className={`h-[17px] w-[17px] ${on ? "text-ink" : "text-faint"}`} strokeWidth={on ? 2.2 : 1.8} />
+                className={`flex min-h-10 items-center gap-3 rounded-lg px-3 text-[14px] transition-colors ${on ? "bg-brandtint font-semibold text-brand" : "font-normal text-mute hover:bg-wash hover:text-ink"}`}>
+                <n.icon className={`h-[17px] w-[17px] ${on ? "text-brand" : "text-faint"}`} strokeWidth={on ? 2.2 : 1.8} />
                 {t(n.key)}
               </Link>
             );
@@ -122,7 +122,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
         {items.slice(0, 5).map((n) => {
           const on = isOn(n.href);
           return (
-            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 pt-2 pb-1.5 text-[12px] font-semibold ${on ? "font-semibold text-ink" : "text-faint"}`}>
+            <Link key={n.href} href={n.href} aria-current={on ? "page" : undefined} className={`flex flex-1 flex-col items-center gap-1 pt-2 pb-1.5 text-[12px] font-semibold ${on ? "text-brand" : "text-faint"}`}>
               <n.icon className="h-[22px] w-[22px]" strokeWidth={on ? 2.2 : 1.8} />
               <span className="max-w-full truncate px-1">{t(n.key)}</span>
             </Link>
@@ -136,7 +136,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
 const ST: Record<string, [string, string]> = {
   draft: ["bg-[#f0f2f5] text-[#545969]", "bg-[#8792a2]"],
   submitted: ["bg-[#fdf3dc] text-[#8a5a00]", "bg-[#d99a12]"],
-  in_review: ["bg-[#e6eefc] text-[#2a55a8]", "bg-sky"],
+  in_review: ["bg-[#f0ebfd] text-[#5a37bd]", "bg-sky"],
   accepted: ["bg-mint text-leafdark", "bg-leaf"],
   returned: ["bg-[#fdeaf0] text-[#a8284c]", "bg-clay"],
 };

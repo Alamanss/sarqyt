@@ -208,7 +208,7 @@ function EntryInner() {
       <ol className="mb-6 flex items-center gap-1.5 overflow-x-auto text-[12px] [scrollbar-width:none] sm:gap-2 sm:text-[14px]">
         {STEPS.map((s, i) => (
           <li key={s} className="flex items-center gap-1.5 whitespace-nowrap sm:gap-2">
-            <span className={`grid h-5 w-5 place-items-center rounded-full text-[12px] ${i < stepIdx ? "bg-leaf text-white" : i === stepIdx ? "bg-ink text-white" : "border border-[#c9cfda] bg-paper text-faint"}`}>
+            <span className={`grid h-5 w-5 place-items-center rounded-full text-[12px] ${i < stepIdx ? "bg-leaf text-white" : i === stepIdx ? "bg-brand text-white" : "border border-[#c9cfda] bg-paper text-faint"}`}>
               {i < stepIdx ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
             </span>
             <span className={i === stepIdx ? "font-semibold text-ink" : "text-mute"}>{t(("st_" + s) as "st_draft")}</span>

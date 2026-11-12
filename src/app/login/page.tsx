@@ -58,7 +58,7 @@ function LoginForm() {
             <div className="overflow-hidden rounded-lg border border-line">
               {DEMO.map(([em, name, role], i) => (
                 <button type="button" key={em} onClick={() => setEmail(em)}
-                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-wash ${i ? "border-t border-line" : ""} ${email === em ? "bg-wash" : ""}`}>
+                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left transition hover:bg-wash ${i ? "border-t border-line" : ""} ${email === em ? "bg-brandtint" : ""}`}>
                   <span className="min-w-0"><span className="block truncate text-[14px] font-semibold">{name}</span><span className="block truncate text-[12px] text-mute">{role}</span></span>
                   <span className="shrink-0 font-mono text-[12px] text-faint">{em}</span>
                 </button>
@@ -82,7 +82,7 @@ function LoginForm() {
             ).map(([h, p], i, a) => (
               <li key={h} className="flex gap-4">
                 <span className="flex flex-col items-center">
-                  <span className="grid h-7 w-7 place-items-center rounded-full border border-line bg-paper text-[12px] font-semibold text-ink">{i + 1}</span>
+                  <span className="grid h-7 w-7 place-items-center rounded-full border border-line bg-paper text-[12px] font-semibold text-brand">{i + 1}</span>
                   {i < a.length - 1 && <span className="w-px flex-1 bg-line" />}
                 </span>
                 <span className="pb-6"><span className="block text-[15px] font-semibold">{h}</span><span className="block text-[14px] text-mute">{p}</span></span>

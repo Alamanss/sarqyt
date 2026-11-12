@@ -2,7 +2,8 @@
 
 /*
   Таблица «цвет → смысл» (design-pro):
-  ink    — действие и активное (единственный акцент), основной текст
+  brand  — действие и активное (единственный акцент)
+  ink    — основной текст
   mute   — второстепенный текст; faint — подписи; line — обводки; wash — фон групп
   leaf   — только успех и польза: «принято», переработка, экономия CO₂
   clay   — только ошибка, возврат, удаление
@@ -25,8 +26,15 @@
   --color-mint: #e7f5f0;
   --color-amber: #b26a00;
   --color-clay: #c8324f;
-  --color-sky: #2f5fc4;
+  --color-sky: #6d45d6;
+  --color-brand: var(--brand);
+  --color-branddark: var(--brand-dark);
+  --color-brandtint: var(--brand-tint);
 }
+
+/* Акцент (действие и активное). По умолчанию синий; тёмный вариант: <html data-accent="ink"> в layout.tsx */
+:root { --brand: #2f55e6; --brand-dark: #2343c4; --brand-tint: #edf1fe; }
+html[data-accent="ink"] { --brand: #16192c; --brand-dark: #2b3050; --brand-tint: #eef0f4; }
 
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -40,15 +48,15 @@ body {
 ::selection { background: #d9deea; }
 
 /* фокус виден у всего интерактивного */
-:where(a, button, select, input, textarea, summary):focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }
+:where(a, button, select, input, textarea, summary):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 
 @layer components {
   .card { @apply rounded-xl border border-line bg-paper p-4 md:p-6; }
-  .btn-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-ink px-5 text-[15px] font-semibold text-white transition-colors hover:bg-[#2b3050] active:bg-[#0d0f1c] disabled:pointer-events-none disabled:bg-[#b9bfcc]; }
-  .btn-dark { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-ink bg-paper px-5 text-[15px] font-semibold text-ink transition-colors hover:bg-wash active:bg-line disabled:pointer-events-none disabled:border-[#b9bfcc] disabled:text-[#9aa1b0]; }
+  .btn-primary { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-[15px] font-semibold text-white transition-colors hover:bg-branddark active:bg-branddark disabled:pointer-events-none disabled:bg-[#b9bfcc]; }
+  .btn-dark { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand bg-paper px-5 text-[15px] font-semibold text-brand transition-colors hover:bg-brandtint active:bg-brandtint disabled:pointer-events-none disabled:border-[#b9bfcc] disabled:text-[#9aa1b0]; }
   .btn-ghost { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#c9cfda] bg-paper px-4 text-[15px] font-normal text-ink transition-colors hover:bg-wash active:bg-line disabled:pointer-events-none disabled:text-[#9aa1b0]; }
   .btn-danger { @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#c9cfda] bg-paper px-4 text-[15px] font-normal text-clay transition-colors hover:bg-[#fdf2f4] active:bg-[#fbe4e8] disabled:pointer-events-none disabled:text-[#9aa1b0]; }
-  .field { @apply min-h-11 w-full rounded-lg border border-[#c9cfda] bg-paper px-3 text-[16px] text-ink outline-none transition-colors placeholder:text-faint hover:border-[#9aa1b0] focus:border-ink focus:ring-1 focus:ring-ink; }
+  .field { @apply min-h-11 w-full rounded-lg border border-[#c9cfda] bg-paper px-3 text-[16px] text-ink outline-none transition-colors placeholder:text-faint hover:border-[#9aa1b0] focus:border-brand focus:ring-1 focus:ring-brand; }
   .label { @apply mb-2 block text-[14px] font-normal text-mute; }
   .h1 { @apply text-[24px] leading-8 font-semibold tracking-[-0.02em] text-ink md:text-[28px] md:leading-9; }
   .h2 { @apply text-[16px] leading-6 font-semibold text-ink; }
@@ -63,7 +71,7 @@ body {
   .note-ok { @apply border-[#b5dfd0] bg-mint text-leafdark; }
   .note-err { @apply border-[#efbcc6] bg-[#fdf2f4] text-clay; }
   .note-info { @apply border-line bg-wash text-ink; }
-  .link { @apply inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink underline decoration-[#c9cfda] underline-offset-4 hover:decoration-ink; }
+  .link { @apply inline-flex items-center gap-1.5 text-[14px] font-semibold text-brand underline decoration-transparent underline-offset-4 hover:decoration-brand; }
 }
 
 /* на телефоне контролы 48 — под палец */
