@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, BarChart3, Camera, Carrot, Check, ClipboardCheck, Coffee, Droplet, FileSpreadsheet, History, Leaf, Lock, Mic, Package, PenLine, Scale, SendHorizontal, ShieldCheck, Table2, Utensils } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { LangSwitch, Logo } from "@/components/Shell";
+import { LangSwitch, Logo, Wordmark } from "@/components/Shell";
 
 /** Число набегает от нуля, когда блок попадает в экран */
 function Count({ to, suffix = "" }: { to: number; suffix?: string }) {
@@ -115,7 +115,7 @@ export default function Home() {
     <div className="min-h-dvh bg-paper">
       <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-3 px-4 md:px-7">
-          <span className="flex items-center gap-2.5 text-[16px] font-semibold tracking-[-0.01em]"><Logo /> Sarqyt</span>
+          <span className="flex items-center gap-2.5"><Logo size={32} /><Wordmark className="text-[24px]" /></span>
           <span className="ml-auto" />
           <LangSwitch />
           <Link href="/login" className="btn-primary !min-h-10 !px-4">{kk ? "Кіру" : "Войти"}</Link>
@@ -226,7 +226,7 @@ export default function Home() {
       </main>
 
       <footer className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-[14px] text-mute md:px-7">
-        <span className="flex items-center gap-2"><Logo size={22} /> Sarqyt · {kk ? "АТУ, 2026" : "АТУ, 2026"}</span>
+        <span className="flex items-center gap-2"><Logo size={22} /><Wordmark className="text-[16px] text-ink" /><span>· АТУ, 2026</span></span>
         <span>{kk ? "«Алматы технологиялық университеті» АҚ кампусына арналған MVP" : "MVP для кампуса АО «Алматинский технологический университет»"}</span>
       </footer>
     </div>

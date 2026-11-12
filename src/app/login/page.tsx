@@ -5,7 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
-import { LangSwitch, Logo } from "@/components/Shell";
+import { LangSwitch, Logo, Wordmark } from "@/components/Shell";
 
 const DEMO: [string, string, string][] = [
   ["iskander@atu.demo", "Столовая «Искандер»", "Ответственное лицо"],
@@ -40,7 +40,7 @@ function LoginForm() {
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,480px)_1fr]">
       <div className="flex flex-col bg-paper px-6 py-6 sm:px-12 lg:border-r lg:border-line">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2.5 text-[14px] font-semibold"><Logo /> Sarqyt</span>
+          <span className="flex items-center gap-2.5"><Logo /><Wordmark className="text-[22px]" /></span>
           <LangSwitch />
         </div>
         <form onSubmit={submit} className="my-auto w-full max-w-[360px] py-10">

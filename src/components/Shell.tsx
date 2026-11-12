@@ -21,12 +21,17 @@ const NAV: { href: string; key: Key; roles: Role[]; icon: LucideIcon }[] = [
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
-      <rect width="64" height="64" rx="15" fill="var(--brand)" />
-      <path d="M12 30.500h40c0 11-9 20-20 20s-20-9-20-20z" fill="#fff" />
-      <rect x="25" y="50" width="14" height="4" rx="2" fill="#fff" />
-      <path d="M36 9.500c-6.200 0-8.200 3.700-4.800 6.800s1.200 6.900-5.200 6.900" fill="none" stroke="#fff" strokeWidth="3.700" strokeLinecap="round" />
+      <rect width="64" height="64" rx="15" fill="#16192c" />
+      <path d="M26 23A7 7 0 1 0 19 30A7 7 0 1 1 12 37" fill="none" stroke="#fff" strokeWidth="6" />
+      <circle cx="43.5" cy="30" r="11" fill="none" stroke="#7f9bff" strokeWidth="6" />
+      <path d="M54.500 19V57" fill="none" stroke="#7f9bff" strokeWidth="6" />
     </svg>
   );
+}
+
+/** Словесный знак: строчными, плотно; буква q — акцентом, как в монограмме */
+export function Wordmark({ className = "" }: { className?: string }) {
+  return <span className={`font-bold tracking-[-0.045em] lowercase leading-none ${className}`} aria-label="Sarqyt">sar<span className="text-brand">q</span>yt</span>;
 }
 
 export function LangSwitch() {
@@ -115,7 +120,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
         <Link href="/" className="flex items-center gap-2.5 px-5 pt-5 pb-4">
           <Logo />
           <span className="leading-tight">
-            <span className="block text-[14px] font-semibold tracking-[-0.01em]">Sarqyt</span>
+            <Wordmark className="block text-[20px]" />
             <span className="block text-[12px] text-mute">{lang === "kk" ? "Қалдықтарды есепке алу" : "Учёт пищевых отходов"}</span>
           </span>
         </Link>
