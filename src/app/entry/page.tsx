@@ -2,7 +2,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Camera, Check, FileSpreadsheet, Inbox, Leaf, Lock, MessageSquareWarning, Mic, Plus, Send, SendHorizontal, Sparkles, Trash2, Apple, Beef, Bone, Candy, Carrot, ChevronDown, Coffee, Cookie, Croissant, Droplet, Egg, Fish, Milk, Package, PackageX, Recycle, Utensils, type LucideIcon } from "lucide-react";
+import { Camera, Check, FileSpreadsheet, Inbox, Square, Leaf, Lock, MessageSquareWarning, Mic, Plus, Send, SendHorizontal, Sparkles, Trash2, Apple, Beef, Bone, Candy, Carrot, ChevronDown, Coffee, Cookie, Croissant, Droplet, Egg, Fish, Milk, Package, PackageX, Recycle, Utensils, type LucideIcon } from "lucide-react";
 import { PageHead, Shell } from "@/components/Shell";
 import { useConfirm } from "@/components/Confirm";
 import { useAuth } from "@/lib/auth";
@@ -64,6 +64,8 @@ function EntryInner() {
   const [photo, setPhoto] = useState<string | null>(null); // dataURL для прикрепления
   const [ai, setAi] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<MediaRecorder | null>(null);
+  const [recording, setRecording] = useState(false);
   const draftKey = org ? `zw-draft-${org.id}` : "";
 
   const load = useCallback(async () => {
@@ -193,29 +195,61 @@ function EntryInner() {
     } catch { setAi(null); }
   }
 
-  // голос → ИИ разбирает «три кило очистков»
-  function voice() {
+  // результат распознавания → строка таблицы
+  function applyVoice(text: string, j: { typeId?: string | null; quantity?: number }) {
+    if (j.typeId && typeById[j.typeId]) {
+      if ((j.quantity ?? 0) > 0) setVals((o) => ({ ...o, [j.typeId!]: String(j.quantity).replace(".", ",") }));
+      setSrcs((o) => ({ ...o, [j.typeId!]: "voice" }));
+      setAi(`«${text}» — ${nm(typeById[j.typeId], lang)}${(j.quantity ?? 0) > 0 ? `, ${String(j.quantity).replace(".", ",")} ${t(typeById[j.typeId].unit)}` : ""}`);
+      pickType(j.typeId);
+    } else setAi(text ? `«${text}» — ${lang === "kk" ? "қалдық түрі анықталмады" : "вид отхода не распознан"}` : (lang === "kk" ? "Ештеңе естілмеді, қайталап көріңіз" : "Ничего не расслышал, попробуйте ещё раз"));
+  }
+
+  // запасной путь: распознавание речи самим браузером
+  function voiceBrowser() {
     type SR = { lang: string; onresult: (e: { results: { 0: { 0: { transcript: string } } } }) => void; onerror: () => void; start: () => void };
     const W = window as unknown as { SpeechRecognition?: new () => SR; webkitSpeechRecognition?: new () => SR };
     const Ctor = W.SpeechRecognition || W.webkitSpeechRecognition;
-    if (!Ctor) return setMsg({ kind: "err", text: "Голосовой ввод не поддерживается этим браузером" });
+    if (!Ctor) { setAi(null); return setMsg({ kind: "err", text: lang === "kk" ? "Бұл браузер дауыспен енгізуді қолдамайды" : "Этот браузер не поддерживает голосовой ввод" }); }
     const r = new Ctor();
     r.lang = lang === "kk" ? "kk-KZ" : "ru-RU";
     setAi(lang === "kk" ? "Тыңдап тұрмын…" : "Слушаю…");
     r.onerror = () => setAi(null);
     r.onresult = async (e) => {
       const text = e.results[0][0].transcript;
-      setAi(`«${text}»`);
-      try {
-        const j = await api("/api/ai/parse", { text, types: types.map((x) => ({ id: x.id, name: x.name_ru })) });
-        if (j.typeId && typeById[j.typeId]) {
-          if (j.quantity > 0) setVals((o) => ({ ...o, [j.typeId]: String(j.quantity).replace(".", ",") }));
-          setSrcs((o) => ({ ...o, [j.typeId]: "voice" }));
-          pickType(j.typeId);
-        }
-      } catch {}
+      try { applyVoice(text, await api("/api/ai/parse", { text, types: types.map((x) => ({ id: x.id, name: x.name_ru })) })); } catch { setAi(null); }
     };
     r.start();
+  }
+
+  // голос: запись с микрофона → сервер распознаёт речь (Groq Whisper) и разбирает фразу (Claude).
+  // Первое нажатие начинает запись, второе — останавливает; через 7 секунд запись остановится сама.
+  async function voice() {
+    if (recRef.current) { recRef.current.stop(); return; }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") return voiceBrowser();
+    let stream: MediaStream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+    catch { return setMsg({ kind: "err", text: lang === "kk" ? "Микрофонға рұқсат берілмеді" : "Нет доступа к микрофону — разрешите его в браузере" }); }
+    const rec = new MediaRecorder(stream);
+    const chunks: Blob[] = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      stream.getTracks().forEach((x) => x.stop());
+      recRef.current = null; setRecording(false);
+      const blob = new Blob(chunks, { type: rec.mimeType || "audio/webm" });
+      setAi(lang === "kk" ? "Танып жатырмын…" : "Распознаю…");
+      try {
+        const audio = await new Promise<string>((res) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.readAsDataURL(blob); });
+        const j = await api("/api/ai/voice", { audio, lang, types: types.map((x) => ({ id: x.id, name: x.name_ru })) });
+        if (j.error === "no_key" || j.error === "stt_failed") return voiceBrowser();
+        if (j.error) return setAi(lang === "kk" ? "Жазба тым қысқа, қайталап көріңіз" : "Запись слишком короткая, попробуйте ещё раз");
+        applyVoice(j.text ?? "", j);
+      } catch { setAi(null); }
+    };
+    recRef.current = rec; setRecording(true);
+    setAi(lang === "kk" ? "Жазылып жатыр — айтып болған соң микрофонды қайта басыңыз" : "Идёт запись — скажите вид и вес, затем нажмите микрофон ещё раз");
+    rec.start();
+    setTimeout(() => { if (recRef.current === rec && rec.state === "recording") rec.stop(); }, 7000);
   }
 
   // итоги
@@ -274,7 +308,7 @@ function EntryInner() {
                   </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => fileRef.current?.click()} aria-label={t("photoAi")} title={t("photoAi")} className="grid h-11 w-11 place-items-center rounded-lg border border-[#c9cfda] text-mute transition-colors hover:border-brand hover:text-brand"><Camera className="h-5 w-5" /></button>
-                    <button type="button" onClick={voice} aria-label={t("voice")} title={t("voice")} className="grid h-11 w-11 place-items-center rounded-lg border border-[#c9cfda] text-mute transition-colors hover:border-brand hover:text-brand"><Mic className="h-5 w-5" /></button>
+                    <button type="button" onClick={voice} aria-label={recording ? (lang === "kk" ? "Жазуды тоқтату" : "Остановить запись") : t("voice")} aria-pressed={recording} title={t("voice")} className={`grid h-11 w-11 place-items-center rounded-lg border transition-colors ${recording ? "animate-pulse border-clay bg-clay text-white" : "border-[#c9cfda] text-mute hover:border-brand hover:text-brand"}`}>{recording ? <Square className="h-4 w-4" fill="currentColor" /> : <Mic className="h-5 w-5" />}</button>
                     <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = ""; }} />
                   </div>
                 </div>
