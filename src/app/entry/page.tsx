@@ -51,8 +51,10 @@ function EntryInner() {
   const [lastReturn, setLastReturn] = useState<History | null>(null);
   const [date, setDate] = useState(maxDate);
   const [typeId, setTypeId] = useState("");
-  const [qty, setQty] = useState("");
-  const [dispId, setDispId] = useState("");
+  const [vals, setVals] = useState<Record<string, string>>({});          // вес в строке каждого вида
+  const [dispOver, setDispOver] = useState<Record<string, string>>({});  // способ утилизации, если изменён
+  const [srcs, setSrcs] = useState<Record<string, string>>({});          // источник: фото, голос
+  const [photoFor, setPhotoFor] = useState("");
   const [msg, setMsg] = useState<{ kind: "ok" | "err" | "info"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -61,7 +63,6 @@ function EntryInner() {
   const [newRec, setNewRec] = useState(false);
   const [photo, setPhoto] = useState<string | null>(null); // dataURL для прикрепления
   const [ai, setAi] = useState<string | null>(null);
-  const [source, setSource] = useState("web");
   const fileRef = useRef<HTMLInputElement>(null);
   const draftKey = org ? `zw-draft-${org.id}` : "";
 
@@ -85,45 +86,51 @@ function EntryInner() {
 
   useEffect(() => { load(); }, [load]);
 
-  // автосохранение черновика формы
+  // автосохранение черновика: введённые, но не сохранённые веса
   useEffect(() => {
     if (!draftKey) return;
     try {
-      const s = JSON.parse(localStorage.getItem(draftKey) || "null");
-      if (s && (s.typeId || s.qty)) { setTypeId(s.typeId || ""); setQty(s.qty || ""); setDispId(s.dispId || ""); if (s.qty) setMsg({ kind: "info", text: t("draftRestored") }); }
+      const d = JSON.parse(localStorage.getItem(draftKey) || "null");
+      if (d?.vals && Object.values(d.vals).some((v) => String(v).trim() !== "")) { setVals(d.vals); setMsg({ kind: "info", text: t("draftRestored") }); }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey]);
   useEffect(() => {
     if (!draftKey) return;
-    try { localStorage.setItem(draftKey, JSON.stringify({ typeId, qty, dispId })); } catch {}
-  }, [draftKey, typeId, qty, dispId]);
+    try { localStorage.setItem(draftKey, JSON.stringify({ vals })); } catch {}
+  }, [draftKey, vals]);
 
   const typeById = useMemo(() => Object.fromEntries(types.map((x) => [x.id, x])), [types]);
   const dispById = useMemo(() => Object.fromEntries(disposals.map((x) => [x.id, x])), [disposals]);
   const cur = typeById[typeId];
   const editable = !!report && (report.status === "draft" || report.status === "returned");
 
+  // способ утилизации активной строки: изменённый или по умолчанию для вида
+  const dispId = cur ? (dispOver[cur.id] ?? cur.default_disposal_id ?? "") : "";
+  const setDispId = (v: string) => { if (cur) setDispOver((o) => ({ ...o, [cur.id]: v })); };
+  const pending = types.filter((x) => (vals[x.id] ?? "").trim() !== "");
+  const num = (id: string) => Number((vals[id] ?? "").replace(",", "."));
+  const pendingKg = pending.filter((x) => x.unit !== "l").reduce((a, x) => a + (num(x.id) || 0), 0);
+  const pendingL = pending.filter((x) => x.unit === "l").reduce((a, x) => a + (num(x.id) || 0), 0);
+
+  // курсор в поле веса нужной строки; на телефоне открывается цифровая клавиатура
   function pickType(id: string) {
     setTypeId(id);
-    const tp = typeById[id];
-    if (tp?.default_disposal_id) setDispId(tp.default_disposal_id);
-    // сразу к весу: поле в фокусе, на телефоне открывается цифровая клавиатура
-    requestAnimationFrame(() => { const q = document.getElementById("q"); q?.scrollIntoView({ block: "center", behavior: "smooth" }); q?.focus({ preventScroll: true }); });
+    requestAnimationFrame(() => { const q = document.getElementById("q-" + id); q?.scrollIntoView({ block: "center", behavior: "smooth" }); q?.focus({ preventScroll: true }); });
   }
 
   async function save() {
     if (!report || !org) return;
-    const q = Number(String(qty).replace(",", "."));
-    if (!typeId || !date || !qty) return setMsg({ kind: "err", text: t("errRequired") });
-    if (!(q > 0)) return setMsg({ kind: "err", text: t("errPositive") });
-    if (q > MAX_QTY) return setMsg({ kind: "err", text: t("errTooBig") });
+    if (!pending.length) return setMsg({ kind: "err", text: lang === "kk" ? "Кемінде бір жолға салмақ енгізіңіз" : "Введите вес хотя бы в одной строке" });
     if (date > today()) return setMsg({ kind: "err", text: t("errFuture") });
-    const dup = entries.some((e) => e.entry_date === date && e.waste_type_id === typeId && Number(e.quantity) === q);
-    if (dup && !(await ask({ title: lang === "kk" ? "Ұқсас жазба бар" : "Похожая запись уже есть", text: t("dupWarn"), ok: lang === "kk" ? "Сақтау" : "Сохранить", cancel: t("cancel") }))) return;
+    const rows = pending.map((x) => ({ x, q: num(x.id) }));
+    const bad = rows.find((r) => !(r.q > 0)) ?? rows.find((r) => r.q > MAX_QTY);
+    if (bad) { pickType(bad.x.id); return setMsg({ kind: "err", text: `${nm(bad.x, lang)}: ${(bad.q > MAX_QTY ? t("errTooBig") : t("errPositive")).toLowerCase()}` }); }
+    const dups = rows.filter((r) => entries.some((e) => e.entry_date === date && e.waste_type_id === r.x.id && Number(e.quantity) === r.q));
+    if (dups.length && !(await ask({ title: lang === "kk" ? "Ұқсас жазба бар" : "Похожая запись уже есть", text: `${dups.map((d) => nm(d.x, lang)).join(", ")}. ${t("dupWarn")}`, ok: lang === "kk" ? "Сақтау" : "Сохранить", cancel: t("cancel") }))) return;
     setBusy(true);
     let photo_url: string | null = null;
-    if (photo) {
+    if (photo && rows.some((r) => r.x.id === photoFor)) {
       try {
         const blob = await (await fetch(photo)).blob();
         const path = `${org.id}/${Date.now()}.jpg`;
@@ -131,15 +138,16 @@ function EntryInner() {
         if (!up.error) photo_url = supabase.storage.from("photos").getPublicUrl(path).data.publicUrl;
       } catch {}
     }
-    const { error } = await supabase.from("entries").insert({
-      report_id: report.id, org_id: org.id, entry_date: date, waste_type_id: typeId, quantity: q,
-      disposal_id: dispId || null, photo_url, source,
-    });
+    const { error } = await supabase.from("entries").insert(rows.map((r) => ({
+      report_id: report.id, org_id: org.id, entry_date: date, waste_type_id: r.x.id, quantity: r.q,
+      disposal_id: dispOver[r.x.id] ?? r.x.default_disposal_id ?? null,
+      photo_url: r.x.id === photoFor ? photo_url : null, source: srcs[r.x.id] ?? "web",
+    })));
     setBusy(false);
     if (error) return setMsg({ kind: "err", text: errText(error, lang) });
-    setQty(""); setPhoto(null); setAi(null); setSource("web");
+    setVals({}); setSrcs({}); setDispOver({}); setPhoto(null); setPhotoFor(""); setAi(null); setTypeId("");
     try { localStorage.removeItem(draftKey); } catch {}
-    setMsg({ kind: "ok", text: t("saved") });
+    setMsg({ kind: "ok", text: `${lang === "kk" ? "Сақталды" : "Сохранено"}: ${entriesLabel(rows.length, lang)}` });
     load();
   }
 
@@ -153,12 +161,12 @@ function EntryInner() {
     if (!org || !newName.trim()) return;
     const { data, error } = await supabase.from("waste_types").insert({
       org_id: org.id, name_ru: newName.trim(), name_kk: newName.trim(), unit: newUnit, recyclable: newRec,
-      default_disposal_id: dispId || disposals.find((d) => d.code === "TBO")?.id || disposals[0]?.id || null, co2_factor: 0.70021,
+      default_disposal_id: disposals.find((d) => d.code === "TBO")?.id || disposals[0]?.id || null, co2_factor: 0.70021,
     }).select().single();
     if (error) return setMsg({ kind: "err", text: errText(error, lang) });
     setAddOpen(false); setNewName("");
     await load();
-    setTypeId((data as WasteType).id);
+    pickType((data as WasteType).id);
   }
 
   async function submit() {
@@ -178,7 +186,7 @@ function EntryInner() {
     try {
       const j = await api("/api/ai/recognize", { image: dataUrl, types: types.map((x) => ({ id: x.id, name: x.name_ru })) });
       if (j.typeId && typeById[j.typeId]) {
-        pickType(j.typeId); setSource("photo");
+        pickType(j.typeId); setPhotoFor(j.typeId); setSrcs((o) => ({ ...o, [j.typeId]: "photo" }));
         setAi(`${t("aiGuess")}: ${nm(typeById[j.typeId], lang)}${j.confidence ? ` (${Math.round(j.confidence * 100)}%)` : ""}`);
       } else setAi(j.suggest ? `${t("aiGuess")}: «${j.suggest}» — ${t("addType").replace("+ ", "").toLowerCase()}?` : null);
       if (!j.typeId && j.suggest) { setNewName(j.suggest); setAddOpen(true); }
@@ -200,9 +208,11 @@ function EntryInner() {
       setAi(`«${text}»`);
       try {
         const j = await api("/api/ai/parse", { text, types: types.map((x) => ({ id: x.id, name: x.name_ru })) });
-        if (j.typeId && typeById[j.typeId]) pickType(j.typeId);
-        if (j.quantity > 0) setQty(String(j.quantity));
-        setSource("voice");
+        if (j.typeId && typeById[j.typeId]) {
+          if (j.quantity > 0) setVals((o) => ({ ...o, [j.typeId]: String(j.quantity).replace(".", ",") }));
+          setSrcs((o) => ({ ...o, [j.typeId]: "voice" }));
+          pickType(j.typeId);
+        }
       } catch {}
     };
     r.start();
@@ -255,10 +265,13 @@ function EntryInner() {
             <div className="flex items-center gap-2.5 p-5 text-[14px] text-mute"><Lock className="h-4 w-4" />{t("locked")}</div>
           ) : (
             <>
-              {/* шаг 1 — что выбросили: плитки вместо списка, одно касание */}
+              {/* как бумажная таблица: вес вписывается прямо в строку вида отхода, сохраняется всё разом */}
               <div className="p-4 md:p-6">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <h2 className="h2">{lang === "kk" ? "Қандай қалдық" : "Что выбросили"}</h2>
+                  <div className="min-w-0">
+                    <h2 className="h2">{lang === "kk" ? "Өлшеулер" : "Взвешивания"}</h2>
+                    <p className="num text-[14px] leading-5 text-mute">{date === today() ? (lang === "kk" ? "бүгін" : "сегодня") + ", " : ""}{dateRu(date)}</p>
+                  </div>
                   <div className="flex gap-2">
                     <button type="button" onClick={() => fileRef.current?.click()} aria-label={t("photoAi")} title={t("photoAi")} className="grid h-11 w-11 place-items-center rounded-lg border border-[#c9cfda] text-mute transition-colors hover:border-brand hover:text-brand"><Camera className="h-5 w-5" /></button>
                     <button type="button" onClick={voice} aria-label={t("voice")} title={t("voice")} className="grid h-11 w-11 place-items-center rounded-lg border border-[#c9cfda] text-mute transition-colors hover:border-brand hover:text-brand"><Mic className="h-5 w-5" /></button>
@@ -272,22 +285,30 @@ function EntryInner() {
                     <span>{ai}</span>
                   </div>
                 )}
-                <div className="grid gap-1.5" role="radiogroup" aria-label={t("wasteType")}>
-                  {types.map((x) => {
-                    const on = x.id === typeId; const Icon = wasteIcon(x.name_ru);
+                <div className="grid gap-1.5">
+                  {types.map((x, idx) => {
+                    const v = vals[x.id] ?? ""; const filled = v.trim() !== ""; const active = x.id === typeId; const Icon = wasteIcon(x.name_ru);
                     return (
-                      <button key={x.id} type="button" role="radio" aria-checked={on} onClick={() => pickType(x.id)}
-                        className={`flex min-h-12 items-center gap-3 rounded-lg border px-2.5 py-1.5 text-left transition-colors ${on ? "border-brand bg-brandtint ring-1 ring-brand" : "border-line hover:border-[#9aa1b0]"}`}>
-                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-md transition-colors ${on ? "bg-brand text-white" : "bg-wash text-mute"}`}><Icon className="h-5 w-5" strokeWidth={1.8} /></span>
-                        <span className={`min-w-0 flex-1 text-[15px] leading-5 ${on ? "font-semibold" : ""}`}>{nm(x, lang)}</span>
-                        <span className="shrink-0 text-[12px] text-faint">{t(x.unit)}</span>
-                      </button>
+                      <label key={x.id} htmlFor={"q-" + x.id}
+                        className={`flex min-h-14 cursor-text items-center gap-3 rounded-lg border py-1.5 pr-1.5 pl-2.5 transition-colors ${filled ? "border-brand bg-brandtint" : active ? "border-[#9aa1b0]" : "border-line hover:border-[#9aa1b0]"}`}>
+                        <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-md transition-colors ${filled ? "bg-brand text-white" : "bg-wash text-mute"}`}><Icon className="h-5 w-5" strokeWidth={1.8} /></span>
+                        <span className="min-w-0 flex-1 text-[15px] leading-5">{nm(x, lang)}{srcs[x.id] && <span className="ml-2 rounded bg-paper px-1.5 py-px text-[12px] text-mute">{SRC[srcs[x.id]] ?? srcs[x.id]}</span>}</span>
+                        <span className="relative shrink-0">
+                          <input id={"q-" + x.id} className="num h-11 w-[104px] rounded-lg border border-[#c9cfda] bg-paper pr-8 pl-2 text-right text-[18px] font-semibold outline-none transition-colors placeholder:font-normal placeholder:text-[#b9bfcc] focus:border-brand focus:ring-1 focus:ring-brand"
+                            inputMode="decimal" enterKeyHint={idx < types.length - 1 ? "next" : "done"} placeholder="0,0" autoComplete="off" value={v}
+                            aria-label={`${nm(x, lang)}, ${t(x.unit)}`}
+                            onFocus={() => setTypeId(x.id)}
+                            onChange={(e) => setVals((o) => ({ ...o, [x.id]: e.target.value.replace(/[^0-9.,]/g, "") }))}
+                            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); const next = types[idx + 1]; if (next) document.getElementById("q-" + next.id)?.focus(); else (e.target as HTMLInputElement).blur(); } }} />
+                          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[12px] text-faint">{t(x.unit)}</span>
+                        </span>
+                      </label>
                     );
                   })}
                   {!addOpen && (
                     <button type="button" onClick={() => setAddOpen(true)} className="flex min-h-12 items-center gap-3 rounded-lg border border-dashed border-[#c9cfda] px-2.5 py-1.5 text-left text-mute transition-colors hover:border-brand hover:text-brand">
                       <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-wash"><Plus className="h-5 w-5" /></span>
-                      <span className="text-[15px] leading-5">{lang === "kk" ? "Басқа түрі" : "Другой вид"}</span>
+                      <span className="text-[15px] leading-5">{lang === "kk" ? "Кестеде жоқ түрін қосу" : "Добавить вид, которого нет в таблице"}</span>
                     </button>
                   )}
                 </div>
@@ -307,33 +328,24 @@ function EntryInner() {
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* шаг 2 — сколько */}
-              <div className="border-t border-line p-4 md:p-6">
-                <label className="h2 mb-3 block" htmlFor="q">{cur?.unit === "l" ? (lang === "kk" ? "Қанша литр" : "Сколько литров") : (lang === "kk" ? "Салмағы қанша" : "Сколько весит")}</label>
-                <div className="relative">
-                  <input id="q" className="field num !h-[72px] !pr-14 !text-[36px] font-semibold tracking-[-0.02em]" inputMode="decimal" placeholder="0,0" value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9.,]/g, ""))} />
-                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[16px] text-faint">{t(cur?.unit ?? "kg")}</span>
-                </div>
-
-                {/* дата и способ подставляются сами; меняются по нажатию */}
+                {/* дата и способ утилизации подставляются сами; меняются по нажатию */}
                 <details className="mt-4 rounded-lg border border-line">
                   <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-[14px] [&::-webkit-details-marker]:hidden">
-                    <span className="min-w-0 truncate"><span className="num">{date === today() ? (lang === "kk" ? "Бүгін" : "Сегодня") : dateRu(date)}</span><span className="text-mute"> · {dispById[dispId] ? nm(dispById[dispId], lang) : (lang === "kk" ? "тәсіл таңдалмаған" : "способ не выбран")}</span></span>
+                    <span className="min-w-0 truncate text-mute">{lang === "kk" ? "Күні және кәдеге жарату тәсілі" : "Дата и способ утилизации"}</span>
                     <span className="flex shrink-0 items-center gap-1 text-brand">{lang === "kk" ? "Өзгерту" : "Изменить"}<ChevronDown className="h-4 w-4" /></span>
                   </summary>
                   <div className="grid gap-3 border-t border-line p-3">
                     <div>
-                      <label className="label" htmlFor="dm">{t("disposal")}</label>
-                      <select id="dm" className="field" value={dispId} onChange={(e) => setDispId(e.target.value)}>
-                        <option value="">{lang === "kk" ? "Тізімнен таңдаңыз" : "Выберите из списка"}</option>
-                        {disposals.map((x) => <option key={x.id} value={x.id}>{nm(x, lang)}</option>)}
-                      </select>
-                    </div>
-                    <div>
                       <label className="label" htmlFor="d">{t("date")}</label>
                       <input id="d" className="field" type="date" value={date} min={`${month}-01`} max={maxDate} onChange={(e) => setDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="dm">{t("disposal")}{cur ? ` — ${nm(cur, lang)}` : ""}</label>
+                      <select id="dm" className="field" value={dispId} disabled={!cur} onChange={(e) => setDispId(e.target.value)}>
+                        <option value="">{cur ? (lang === "kk" ? "Тізімнен таңдаңыз" : "Выберите из списка") : (lang === "kk" ? "Алдымен жолды таңдаңыз" : "Сначала выберите строку")}</option>
+                        {disposals.map((x) => <option key={x.id} value={x.id}>{nm(x, lang)}</option>)}
+                      </select>
                     </div>
                     <p className="text-[14px] text-mute">{t("responsible")}: <span className="text-ink">{profile?.full_name}</span></p>
                   </div>
@@ -341,12 +353,13 @@ function EntryInner() {
                 {cur?.recommended_disposal_id && cur.recommended_disposal_id !== dispId && dispById[cur.recommended_disposal_id] && (
                   <button type="button" onClick={() => setDispId(cur.recommended_disposal_id!)} className="mt-2 flex w-full items-start gap-2 rounded-lg bg-mint px-3 py-2.5 text-left text-[14px] leading-5 text-leafdark transition-colors hover:bg-[#d9efe6]">
                     <Leaf className="mt-0.5 h-4 w-4 shrink-0" />
-                    <span>{lang === "kk" ? "Дұрысы" : "Лучше"}: <b className="font-semibold">{nm(dispById[cur.recommended_disposal_id], lang)}</b> <span className="num whitespace-nowrap">−{Math.round(Number(cur.co2_landfill ?? 0) - Number(cur.co2_recommended ?? 0))} кг CO₂e/т</span></span>
+                    <span>{nm(cur, lang)}: {lang === "kk" ? "дұрысы" : "лучше"} <b className="font-semibold">{nm(dispById[cur.recommended_disposal_id], lang).toLowerCase()}</b> <span className="num whitespace-nowrap">−{Math.round(Number(cur.co2_landfill ?? 0) - Number(cur.co2_recommended ?? 0))} кг CO₂e/т</span></span>
                   </button>
                 )}
 
                 <div className="mt-6 max-md:sticky max-md:bottom-[68px] max-md:z-10 max-md:-mx-4 max-md:-mb-4 max-md:rounded-b-xl max-md:border-t max-md:border-line max-md:bg-paper max-md:p-3">
-                  <button type="button" className="btn-primary w-full !min-h-12" onClick={save} disabled={busy}>{t("save")}</button>
+                  {pending.length > 0 && <p className="num mb-2 text-center text-[14px] leading-5 text-mute">{lang === "kk" ? "Сақталады" : "К сохранению"}: {entriesLabel(pending.length, lang)} · {fmt(pendingKg)} {t("kg")}{pendingL > 0 ? ` + ${fmt(pendingL)} ${t("l")}` : ""}</p>}
+                  <button type="button" className="btn-primary w-full !min-h-12" onClick={save} disabled={busy || pending.length === 0}>{pending.length > 1 ? `${lang === "kk" ? "Сақтау" : "Сохранить"} · ${entriesLabel(pending.length, lang)}` : t("save")}</button>
                 </div>
               </div>
             </>

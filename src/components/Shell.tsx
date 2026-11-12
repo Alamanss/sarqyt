@@ -2,10 +2,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { BarChart3, ClipboardList, FileSpreadsheet, LogOut, PenLine, Settings2, Table2, type LucideIcon } from "lucide-react";
+import { BarChart3, ClipboardList, FileSpreadsheet, LogOut, PenLine, RotateCcw, Settings2, Table2, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useI18n, nm, type Key } from "@/lib/i18n";
 import type { Role } from "@/lib/supabase";
+import { api } from "@/lib/data";
+import { useConfirm } from "@/components/Confirm";
 
 const NAV: { href: string; key: Key; roles: Role[]; icon: LucideIcon }[] = [
   { href: "/entry", key: "navEntry", roles: ["responsible"], icon: PenLine },
@@ -61,6 +63,26 @@ export function DesignSwitch() {
       <select className="ml-auto h-7 rounded-md border border-line bg-paper px-1.5 text-[12px] text-ink" value={font} onChange={(e) => apply("font", e.target.value)} aria-label="Шрифт">
         <option value="inter">Inter</option><option value="golos">Golos Text</option><option value="onest">Onest</option>
       </select>
+    </div>
+  );
+}
+
+/** Сброс показа: возвращает отчёты месяца к исходным статусам и убирает внесённое сегодня. Только для демо-пользователей */
+function DemoReset() {
+  const { lang } = useI18n();
+  const ask = useConfirm();
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    if (!(await ask({ title: lang === "kk" ? "Көрсетілімді бастапқы күйге қайтару керек пе?" : "Сбросить показ?", text: lang === "kk" ? "Осы айдағы есептер бастапқы мәртебесіне оралады, бүгін енгізілген жазбалар жойылады. Өткен айлардың деректері өзгермейді." : "Отчёты этого месяца вернутся к исходным статусам, записи, внесённые сегодня, удалятся. Данные прошлых месяцев не меняются.", ok: lang === "kk" ? "Қайтару" : "Сбросить", cancel: lang === "kk" ? "Болдырмау" : "Отмена" }))) return;
+    setBusy(true);
+    try { localStorage.removeItem("zw-draft"); Object.keys(localStorage).filter((k) => k.startsWith("zw-draft-")).forEach((k) => localStorage.removeItem(k)); } catch {}
+    await api("/api/demo/reset", {});
+    window.location.reload();
+  }
+  return (
+    <div className="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4 text-[14px] text-mute">
+      <span>{lang === "kk" ? "Демо-режим: деректер оқу мақсатында жасалған" : "Демо-режим: данные сгенерированы для показа"}</span>
+      <button type="button" onClick={run} disabled={busy} className="link"><RotateCcw className={`h-4 w-4 ${busy ? "animate-spin" : ""}`} />{lang === "kk" ? "Көрсетілімді қайтару" : "Сбросить показ"}</button>
     </div>
   );
 }
@@ -142,7 +164,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
         <button type="button" onClick={signOut} aria-label={t("logout")} className="grid h-9 w-9 place-items-center rounded-lg text-mute hover:bg-wash"><LogOut className="h-[18px] w-[18px]" strokeWidth={1.9} /></button>
       </header>
 
-      <main className="app-main mx-auto max-w-[1200px] px-4 pt-6 pb-28 md:px-7 md:pt-8 md:pb-16">{children}</main>
+      <main className="app-main mx-auto max-w-[1200px] px-4 pt-6 pb-28 md:px-7 md:pt-8 md:pb-16">{children}{profile.email?.endsWith("@atu.demo") && <DemoReset />}</main>
 
       {/* нижнее меню — телефон */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] md:hidden">
