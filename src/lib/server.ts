@@ -19,7 +19,9 @@ export async function caller(req: Request) {
 
 export const json = (body: unknown, status = 200) => Response.json(body, { status });
 
-const MODEL = "claude-haiku-5-5";
+// Модель задаётся настройкой AI_MODEL; по умолчанию Claude Sonnet 5.5.
+// effort: "low" — задачи короткие (классификация, разбор фразы), важна скорость ответа.
+const MODEL = process.env.AI_MODEL || "claude-sonnet-5-5";
 
 /** Запрос к Claude, ответ — JSON-объект (или null при любой ошибке, чтобы интерфейс не падал) */
 export async function askJson(system: string, content: Anthropic.MessageParam["content"], maxTokens = 400): Promise<Record<string, unknown> | null> {
@@ -27,7 +29,7 @@ export async function askJson(system: string, content: Anthropic.MessageParam["c
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
     const res = await client.messages.create({
-      model: MODEL, max_tokens: maxTokens, system: system + "\nОтвечай ТОЛЬКО одним JSON-объектом, без пояснений и без markdown.",
+      model: MODEL, max_tokens: Math.max(maxTokens, 1500), output_config: { effort: "low" }, system: system + "\nОтвечай ТОЛЬКО одним JSON-объектом, без пояснений и без markdown.",
       messages: [{ role: "user", content }],
     });
     const text = res.content.map((b) => (b.type === "text" ? b.text : "")).join("");
