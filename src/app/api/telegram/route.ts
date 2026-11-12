@@ -30,7 +30,7 @@ export async function POST(req: Request) {
           }
         }
       }
-      await say("Здравствуйте! Это бот системы <b>ZeroWaste ATU</b>.\nЧтобы привязать аккаунт, откройте в системе раздел «Ввод» и нажмите «Telegram-бот».");
+      await say("Здравствуйте! Это бот системы <b>Sarqyt</b>.\nЧтобы привязать аккаунт, откройте в системе раздел «Ввод» и нажмите «Telegram-бот».");
       return json({ ok: true });
     }
 

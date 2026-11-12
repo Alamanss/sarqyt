@@ -10,7 +10,7 @@ const onest = Onest({ variable: "--font-onest", subsets: ["latin", "cyrillic", "
 const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
-  title: "ZeroWaste ATU — учёт пищевых отходов",
+  title: "Sarqyt — учёт пищевых отходов",
   description: "Цифровая система управления пищевыми отходами университетского комплекса АТУ",
   manifest: "/manifest.webmanifest",
 };

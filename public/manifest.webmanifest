@@ -1,6 +1,6 @@
 {
-  "name": "ZeroWaste ATU",
-  "short_name": "ZeroWaste",
+  "name": "Sarqyt",
+  "short_name": "Sarqyt",
   "description": "Учёт пищевых отходов университетского комплекса АТУ",
   "start_url": "/",
   "display": "standalone",

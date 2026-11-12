@@ -27,7 +27,7 @@ async function run() {
     missing.push(o.name_ru);
     for (const u of (users ?? []).filter((x) => x.org_id === o.id)) {
       if (!u.telegram_chat_id) { noTelegram++; continue; }
-      await tg("sendMessage", { chat_id: u.telegram_chat_id, parse_mode: "HTML", text: `⏰ <b>Напоминание ZeroWaste ATU</b>\n${o.name_ru}\n${lines.join("\n")}\n\nСрок сдачи — до 5-го числа следующего месяца.` });
+      await tg("sendMessage", { chat_id: u.telegram_chat_id, parse_mode: "HTML", text: `⏰ <b>Напоминание Sarqyt</b>\n${o.name_ru}\n${lines.join("\n")}\n\nСрок сдачи — до 5-го числа следующего месяца.` });
       sent++;
     }
   }

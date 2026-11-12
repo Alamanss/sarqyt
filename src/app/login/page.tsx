@@ -40,7 +40,7 @@ function LoginForm() {
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,480px)_1fr]">
       <div className="flex flex-col bg-paper px-6 py-6 sm:px-12 lg:border-r lg:border-line">
         <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2.5 text-[14px] font-semibold"><Logo /> ZeroWaste ATU</span>
+          <span className="flex items-center gap-2.5 text-[14px] font-semibold"><Logo /> Sarqyt</span>
           <LangSwitch />
         </div>
         <form onSubmit={submit} className="my-auto w-full max-w-[360px] py-10">

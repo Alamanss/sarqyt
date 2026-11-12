@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
 export async function GET() {
   return json({
-    name: "ZeroWaste ATU scale API",
+    name: "Sarqyt scale API",
     usage: "POST /api/scale with header x-api-key and JSON body {org, waste, weight, device?}",
     orgs: ["tpp", "thipp", "atu-inn", "canella", "iskander"],
   });

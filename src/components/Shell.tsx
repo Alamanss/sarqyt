@@ -20,8 +20,7 @@ export function Logo({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
       <rect width="32" height="32" rx="8" fill="var(--brand)" />
-      <path d="M22.5 16a6.5 6.5 0 1 1-2.2-4.9" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M17.6 9.6l3 1.4-1.3 3" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21.2 11.4c-1.1-1.8-3-2.9-5.3-2.9-3 0-5.2 1.7-5.2 4 0 5.2 10.6 2.3 10.6 7.5 0 2.3-2.3 4-5.3 4-2.3 0-4.3-1.1-5.4-2.9" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -92,7 +91,7 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
         <Link href="/" className="flex items-center gap-2.5 px-5 pt-5 pb-4">
           <Logo />
           <span className="leading-tight">
-            <span className="block text-[14px] font-semibold tracking-[-0.01em]">ZeroWaste ATU</span>
+            <span className="block text-[14px] font-semibold tracking-[-0.01em]">Sarqyt</span>
             <span className="block text-[12px] text-mute">{lang === "kk" ? "Қалдықтарды есепке алу" : "Учёт пищевых отходов"}</span>
           </span>
         </Link>
@@ -136,14 +135,14 @@ export function Shell({ children, roles }: { children: ReactNode; roles?: Role[]
       <header className="sticky top-0 z-30 flex items-center gap-2.5 border-b border-line bg-paper px-4 py-2.5 md:hidden">
         <Logo size={30} />
         <span className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-[14px] font-semibold">{org ? nm(org, lang) : "ZeroWaste ATU"}</span>
+          <span className="block truncate text-[14px] font-semibold">{org ? nm(org, lang) : "Sarqyt"}</span>
           <span className="block truncate text-[12px] text-mute">{profile.full_name} · {t(("role_" + profile.role) as Key)}</span>
         </span>
         <LangSwitch />
         <button type="button" onClick={signOut} aria-label={t("logout")} className="grid h-9 w-9 place-items-center rounded-lg text-mute hover:bg-wash"><LogOut className="h-[18px] w-[18px]" strokeWidth={1.9} /></button>
       </header>
 
-      <main className="mx-auto max-w-[1200px] px-4 pt-6 pb-28 md:px-7 md:pt-8 md:pb-16">{children}</main>
+      <main className="app-main mx-auto max-w-[1200px] px-4 pt-6 pb-28 md:px-7 md:pt-8 md:pb-16">{children}</main>
 
       {/* нижнее меню — телефон */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-line bg-paper pb-[env(safe-area-inset-bottom)] md:hidden">

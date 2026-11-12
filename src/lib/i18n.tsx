@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 export type Lang = "ru" | "kk";
 
 const D = {
-  appName: ["ZeroWaste ATU", "ZeroWaste ATU"],
+  appName: ["Sarqyt", "Sarqyt"],
   appSub: ["Учёт пищевых отходов университетского комплекса", "Университет кешенінің тамақ қалдықтарын есепке алу"],
   login: ["Войти", "Кіру"],
   logout: ["Выйти", "Шығу"],

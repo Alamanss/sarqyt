@@ -63,7 +63,7 @@ function Summary() {
   async function exportExcel() {
     const ExcelJS = (await import("exceljs")).default;
     const wb = new ExcelJS.Workbook();
-    wb.creator = "ZeroWaste ATU";
+    wb.creator = "Sarqyt";
     const head = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF0F3A28" } };
     const thin = { style: "thin" as const, color: { argb: "FFBBBBBB" } };
     const border = { top: thin, left: thin, bottom: thin, right: thin };
@@ -105,7 +105,7 @@ function Summary() {
     const co2 = entries.reduce((a, e) => a + Number(e.quantity) * Number(typeById[e.waste_type_id]?.co2_factor ?? 0), 0);
     ws.addRow([]);
     ws.addRow([`CO₂-эквивалент за период: ${Math.round(co2)} кг (по коэффициентам справочника видов отходов)`]);
-    ws.addRow([`Сформировано: ${new Date().toLocaleString("ru-RU")} · ZeroWaste ATU`]);
+    ws.addRow([`Сформировано: ${new Date().toLocaleString("ru-RU")} · Sarqyt`]);
     ws.columns.forEach((c, i) => { c.width = i === 0 ? 44 : i === 1 ? 46 : i === 2 ? 6 : 16; });
 
     // Лист 2 — журнал записей по структуре действующих таблиц
