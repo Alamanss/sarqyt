@@ -23,6 +23,28 @@ const TIPS: [RegExp, string, string][] = [
   [/кост|мяс/i, "Кости и обрезки мяса — на бульоны и на корм через ветеринарно допустимые каналы; контролировать нормы разделки.", "Сүйек пен ет кесінділерін сорпаға және азыққа пайдаланыңыз; бөлшектеу нормаларын бақылаңыз."],
 ];
 
+// «Вторая жизнь»: что можно получить из отхода и можно ли это в пищу.
+// Идеи, а не рецепты: применимость утверждает технолог организации (ХАССП, ТР ЕАЭС).
+type Safety = "food" | "cond" | "no" | "never" | "none";
+const SECOND_LIFE: [RegExp, string, string, Safety][] = [
+  [/нереализ/i, "Передать до истечения срока или уценить за час до закрытия; хлеб — на сухари и панировку", "Мерзімі өткенше беру немесе жабылуға бір сағат қалғанда арзандату; нан — кептірілген нанға", "food"],
+  [/из зала|остатки еды/i, "Только компост или биогаз: остатки с тарелок повторно не используют", "Тек компост немесе биогаз: табақтан қалған тамақ қайта пайдаланылмайды", "never"],
+  [/масл/i, "Сдать переработчику: биодизель, техническое мыло", "Өңдеушіге тапсыру: биодизель, техникалық сабын", "never"],
+  [/кофе/i, "Субстрат для выращивания вёшенок, удобрение для озеленения кампуса", "Саңырауқұн өсіруге арналған субстрат, кампусты көгалдандыруға тыңайтқыш", "no"],
+  [/скорлуп/i, "Кальциевая подкормка для растений после прокаливания", "Қыздырылғаннан кейін өсімдіктерге кальций қоспасы", "no"],
+  [/кост|мяс|рыб/i, "Биогаз (анаэробное сбраживание); в обычный компост не принимают", "Биогаз (анаэробты ашыту); кәдімгі компостқа қабылданбайды", "never"],
+  [/хлеб|кондитер|сахар/i, "Образцы без контакта с реактивами — на корм по договору; остальное — компост", "Реактивтермен жанаспаған үлгілер — шарт бойынша мал азығына; қалғаны — компост", "no"],
+  [/очистк|овощ|фрукт/i, "Чистые обрезки мытых овощей — на овощной бульон; остальное — компост", "Жуылған көкөністің таза кесінділері — көкөніс сорпасына; қалғаны — компост", "cond"],
+  [/картон|упаков|пэт|стекл|алюмин|бутыл|банк/i, "Раздельный сбор и сдача во вторсырьё", "Бөлек жинап, қайталама шикізатқа тапсыру", "none"],
+];
+const SAFETY: Record<Safety, [string, string, string]> = {
+  food: ["В пищу — в сроке годности", "Тағамға — жарамдылық мерзімінде", "bg-mint text-leafdark"],
+  cond: ["В пищу — с условием", "Тағамға — шартпен", "bg-[#fdf3dc] text-[#8a5a00]"],
+  no: ["Не в пищу", "Тағамға емес", "bg-[#eef0f4] text-mute"],
+  never: ["Никогда в пищу", "Тағамға ешқашан", "bg-[#fdeaf0] text-[#a8284c]"],
+  none: ["", "", ""],
+};
+
 function Dashboard() {
   const { profile, org } = useAuth();
   const { t, lang } = useI18n();
@@ -71,12 +93,12 @@ function Dashboard() {
   // KPI
   const total = data.reduce((a, e) => a + Number(e.quantity), 0);
   let co2 = 0, potential = 0, saved = 0;
-  const potByName: Record<string, { kg: number; co2: number; rec: string; orgs: Set<string> }> = {};
+  const potByName: Record<string, { kg: number; co2: number; rec: string; ru: string; orgs: Set<string> }> = {};
   for (const e of data) {
     const w = typeById[e.waste_type_id]; const c = co2calc(e, w, dispById[e.disposal_id ?? ""]);
     co2 += c.actual; potential += c.potential; saved += c.saved;
     if (c.potential > 0 && w) {
-      const k = nm(w, lang); const p = (potByName[k] ??= { kg: 0, co2: 0, rec: nm(dispById[w.recommended_disposal_id ?? ""], lang), orgs: new Set() });
+      const k = nm(w, lang); const p = (potByName[k] ??= { kg: 0, co2: 0, rec: nm(dispById[w.recommended_disposal_id ?? ""], lang), ru: w.name_ru, orgs: new Set() });
       p.kg += Number(e.quantity); p.co2 += c.potential; p.orgs.add(e.org_id);
     }
   }
@@ -236,18 +258,30 @@ function Dashboard() {
 
         <div className="card !p-0">
           <div className="flex items-center justify-between border-b border-line px-4 py-4 md:px-6">
-            <h2 className="h2 flex items-center gap-2"><Leaf className="h-4 w-4 text-leaf" />{t("recommendations")}</h2>
-            <span className="text-[14px] text-mute">DEFRA 2024</span>
+            <h2 className="h2 flex items-center gap-2"><Leaf className="h-4 w-4 text-leaf" />{lang === "kk" ? "Екінші өмір: қалдықты неге айналдыруға болады" : "Вторая жизнь: во что превратить отходы"}</h2>
           </div>
           <ul className="divide-y divide-line">
-            {potTop.map(([name, p]) => (
-              <li key={name} className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 md:px-6">
-                <span className="min-w-0"><span className="block truncate text-[14px] font-semibold">{name}</span><span className="num block truncate text-[12px] text-mute">{fmt(p.kg)} {t("kg")} · {p.rec}</span></span>
-                <span className="num whitespace-nowrap rounded-md bg-mint px-2 py-[3px] text-[12px] font-semibold text-leafdark">−{fmt(p.co2)} кг CO₂e</span>
-              </li>
-            ))}
+            {potTop.map(([name, p]) => {
+              const life = SECOND_LIFE.find(([r]) => r.test(p.ru));
+              const safe = life ? SAFETY[life[3]] : null;
+              return (
+                <li key={name} className="px-4 py-3 md:px-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="min-w-0"><span className="block text-[14px] leading-5 font-semibold">{name}</span><span className="num block text-[12px] leading-4 text-mute">{fmt(p.kg)} {t("kg")} · {p.rec}</span></span>
+                    <span className="num whitespace-nowrap rounded-md bg-mint px-2 py-[3px] text-[12px] font-semibold text-leafdark">−{fmt(p.co2)} кг CO₂e</span>
+                  </div>
+                  {life && (
+                    <p className="mt-2 text-[14px] leading-5 text-ink">
+                      {life[lang === "kk" ? 2 : 1]}
+                      {safe && safe[0] && <span className={`ml-2 inline-block whitespace-nowrap rounded-md px-1.5 py-px align-[1px] text-[12px] ${safe[2]}`}>{safe[lang === "kk" ? 1 : 0]}</span>}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
           </ul>
-          {tips.length > 0 && (
+          <p className="border-t border-line px-4 py-3 text-[12px] leading-4 text-mute md:px-6">{lang === "kk" ? "Идеялар — рецепт емес: қолдануды ұйымның технологы ХАССП және ЕАЭО ТР талаптары бойынша бекітеді. CO₂ — DEFRA 2024 коэффициенттері." : "Идеи, а не рецепты: применение утверждает технолог организации по требованиям ХАССП и ТР ЕАЭС. CO₂ — по коэффициентам DEFRA 2024."}</p>
+          {false && tips.length > 0 && (
             <ul className="space-y-2 border-t border-line bg-wash px-4 py-4 md:px-6 text-[14px] text-ink">
               {tips.map((s, i) => <li key={i} className="flex gap-2"><span className="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-faint" /><span>{s}</span></li>)}
             </ul>
